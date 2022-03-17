@@ -1,17 +1,18 @@
 package sort
 
 import (
-	"github.com/gocrane/crane/pkg/ensurance/executor"
-	"github.com/gocrane/crane/pkg/utils"
 	v1 "k8s.io/api/core/v1"
+
+	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
+	"github.com/gocrane/crane/pkg/utils"
 )
 
-func CpuMetricsSorter(pods []executor.PodContext) {
-	orderedBy(classAndPriority, cpuUsage, runningTime).Sort(pods)
+func CpuMetricsSorter(pods []podinfo.PodContext) {
+	orderedBy(classAndPriority, cpuUsage, extCpuUsage, runningTime).Sort(pods)
 }
 
-// extCpuUsage compares the partition extcpu usage of extcpu limit
-func extCpuUsage(p1, p2 executor.PodContext) int32 {
+// extCpuUsage compares the partition of extcpu usage to extcpu limit
+func extCpuUsage(p1, p2 podinfo.PodContext) int32 {
 	// if both pod don't use ext resource, then return
 	if p1.ExtCpuBeUsed == false && p2.ExtCpuBeUsed == false {
 		return 0
@@ -24,7 +25,7 @@ func extCpuUsage(p1, p2 executor.PodContext) int32 {
 }
 
 // cpuUsage compares the partition extcpu usage of extcpu limit
-func cpuUsage(p1, p2 executor.PodContext) int32 {
+func cpuUsage(p1, p2 podinfo.PodContext) int32 {
 	var p1usage, p2usage float64
 	// if both pod is PodQOSBestEffort, then compare the absolute usage;otherwise, cmpare the ratio compared with PodCPUQuota
 	if p1.ClassAndPriority.PodQOSClass == v1.PodQOSBestEffort && p2.ClassAndPriority.PodQOSClass == v1.PodQOSBestEffort {
@@ -38,7 +39,7 @@ func cpuUsage(p1, p2 executor.PodContext) int32 {
 }
 
 // extCpuBeUsed compares pod by using ext resource whether
-func extCpuBeUsed(p1, p2 executor.PodContext) int32 {
+func extCpuBeUsed(p1, p2 podinfo.PodContext) int32 {
 	use1 := utils.TransBool2Uint(p1.ExtCpuBeUsed)
 	use2 := utils.TransBool2Uint(p2.ExtCpuBeUsed)
 

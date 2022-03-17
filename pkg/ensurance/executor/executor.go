@@ -11,6 +11,7 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/klog/v2"
 
+	"github.com/gocrane/crane/pkg/common"
 	cgrpc "github.com/gocrane/crane/pkg/ensurance/grpc"
 	cruntime "github.com/gocrane/crane/pkg/ensurance/runtime"
 	"github.com/gocrane/crane/pkg/known"
@@ -29,11 +30,13 @@ type ActionExecutor struct {
 
 	runtimeClient pb.RuntimeServiceClient
 	runtimeConn   *grpc.ClientConn
+
+	getStateFunc func() map[string][]common.TimeSeries
 }
 
 // NewActionExecutor create enforcer manager
 func NewActionExecutor(client clientset.Interface, nodeName string, podInformer coreinformers.PodInformer, nodeInformer coreinformers.NodeInformer,
-	noticeCh <-chan AvoidanceExecutor, runtimeEndpoint string) *ActionExecutor {
+	noticeCh <-chan AvoidanceExecutor, runtimeEndpoint string, getStateFunc func() map[string][]common.TimeSeries) *ActionExecutor {
 
 	runtimeClient, runtimeConn, err := cruntime.GetRuntimeClient(runtimeEndpoint)
 	if err != nil {
@@ -51,6 +54,7 @@ func NewActionExecutor(client clientset.Interface, nodeName string, podInformer 
 		nodeSynced:    nodeInformer.Informer().HasSynced,
 		runtimeClient: runtimeClient,
 		runtimeConn:   runtimeConn,
+		getStateFunc:  getStateFunc,
 	}
 }
 
@@ -103,6 +107,7 @@ func (a *ActionExecutor) execute(ae AvoidanceExecutor, _ <-chan struct{}) error 
 		NodeLister:    a.nodeLister,
 		RuntimeClient: a.runtimeClient,
 		RuntimeConn:   a.runtimeConn,
+		getStateFunc:  a.getStateFunc,
 	}
 
 	//step1 do enforcer actions
