@@ -35,6 +35,8 @@ type StateCollector struct {
 	AnalyzerChann     chan map[string][]common.TimeSeries
 	NodeResourceChann chan map[string][]common.TimeSeries
 	PodResourceChann  chan map[string][]common.TimeSeries
+	state             map[string][]common.TimeSeries
+	rw                sync.RWMutex
 }
 
 func NewStateCollector(nodeName string, nepLister ensuranceListers.NodeQOSEnsurancePolicyLister, podLister corelisters.PodLister,
@@ -94,7 +96,7 @@ func (s *StateCollector) Run(stop <-chan struct{}) {
 				start := time.Now()
 				metrics.UpdateLastTime(string(known.ModuleStateCollector), metrics.StepMain, start)
 				s.healthCheck.UpdateLastActivity(start)
-				s.Collect()
+				s.Collect(false)
 				metrics.UpdateDurationFromStart(string(known.ModuleStateCollector), metrics.StepMain, start)
 			case <-stop:
 				klog.Infof("StateCollector exit")
@@ -106,12 +108,11 @@ func (s *StateCollector) Run(stop <-chan struct{}) {
 	return
 }
 
-func (s *StateCollector) Collect() {
+func (s *StateCollector) Collect(waterLine bool) {
 	wg := sync.WaitGroup{}
 	start := time.Now()
 
 	var data = make(map[string][]common.TimeSeries)
-	var mux sync.Mutex
 
 	s.collectors.Range(func(key, value interface{}) bool {
 		c := value.(Collector)
@@ -124,11 +125,11 @@ func (s *StateCollector) Collect() {
 			defer metrics.UpdateDurationFromStartWithSubComponent(string(known.ModuleStateCollector), string(c.GetType()), metrics.StepCollect, start)
 
 			if cdata, err := c.Collect(); err == nil {
-				mux.Lock()
+				s.rw.Lock()
 				for key, series := range cdata {
 					data[key] = series
 				}
-				mux.Unlock()
+				s.rw.Unlock()
 			}
 		}(c, data)
 
@@ -137,7 +138,12 @@ func (s *StateCollector) Collect() {
 
 	wg.Wait()
 
-	s.AnalyzerChann <- data
+	// If Collect is not called by waterline related logic but StateCollector.Run, AnalyzerChann should not get update, which will trigger recursive analyzes and executes
+	if !waterLine {
+		s.AnalyzerChann <- data
+	}
+
+	s.state = data
 
 	if nodeResource := utilfeature.DefaultFeatureGate.Enabled(features.CraneNodeResource); nodeResource {
 		s.NodeResourceChann <- data
@@ -234,4 +240,13 @@ func CheckMetricNameExist(name string) bool {
 	}
 
 	return false
+}
+
+func (s *StateCollector) GetStateFunc() func() map[string][]common.TimeSeries {
+	return func() map[string][]common.TimeSeries {
+		s.Collect(true)
+		s.rw.RLock()
+		defer s.rw.RUnlock()
+		return s.state
+	}
 }

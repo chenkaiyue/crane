@@ -6,6 +6,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
+	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
 	"github.com/gocrane/crane/pkg/known"
 	"github.com/gocrane/crane/pkg/metrics"
 	"github.com/gocrane/crane/pkg/utils"
@@ -16,8 +17,8 @@ const (
 )
 
 type ScheduleExecutor struct {
-	DisableClassAndPriority *ClassAndPriority
-	RestoreClassAndPriority *ClassAndPriority
+	DisableClassAndPriority *podinfo.ClassAndPriority
+	RestoreClassAndPriority *podinfo.ClassAndPriority
 }
 
 func (b *ScheduleExecutor) Avoid(ctx *ExecuteContext) error {

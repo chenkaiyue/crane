@@ -5,6 +5,8 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	"github.com/gocrane/crane/pkg/common"
 )
 
 type Executor interface {
@@ -25,4 +27,15 @@ type ExecuteContext struct {
 	NodeLister    corelisters.NodeLister
 	RuntimeClient pb.RuntimeServiceClient
 	RuntimeConn   *grpc.ClientConn
+
+	// Gap for metrics in WaterLineMetricsCanBeQualified
+	// Key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleDown action)
+	ThrottoleDownGapToWaterLines GapToWaterLines
+	// Key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleUp action)
+	ThrottoleUpGapToWaterLines GapToWaterLines
+	// key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use evict action)
+	// Only has metrics that can be quantified
+	EvictGapToWaterLines GapToWaterLines
+
+	getStateFunc func() map[string][]common.TimeSeries
 }

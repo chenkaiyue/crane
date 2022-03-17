@@ -1,6 +1,8 @@
-package executor
+package pod_info
 
 import (
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -21,9 +23,62 @@ type ClassAndPriority struct {
 type PodType string
 
 const (
-	Throttle PodType = "Throttle"
-	Evict    PodType = "Evict"
+	ThrottleDown PodType = "ThrottleDown"
+	ThrottleUp   PodType = "ThrottleUp"
+	Evict        PodType = "Evict"
 )
+
+type ContainerUsage struct {
+	ContainerName string
+	ContainerId   string
+	Value         float64
+}
+
+func GetUsageById(usages []ContainerUsage, containerId string) (ContainerUsage, error) {
+	for _, v := range usages {
+		if v.ContainerId == containerId {
+			return v, nil
+		}
+	}
+
+	return ContainerUsage{}, fmt.Errorf("containerUsage not found")
+}
+
+func GetPodUsage(metricName string, stateMap map[string][]common.TimeSeries, pod *v1.Pod) (float64, []ContainerUsage) {
+	var podUsage = 0.0
+	var containerUsages []ContainerUsage
+	var podMaps = map[string]string{common.LabelNamePodName: pod.Name, common.LabelNamePodNamespace: pod.Namespace, common.LabelNamePodUid: string(pod.UID)}
+	state, ok := stateMap[metricName]
+	if !ok {
+		return podUsage, containerUsages
+	}
+	for _, vv := range state {
+		var labelMaps = common.Labels2Maps(vv.Labels)
+		if utils.ContainMaps(labelMaps, podMaps) {
+			if labelMaps[common.LabelNameContainerId] == "" {
+				podUsage = vv.Samples[0].Value
+			} else {
+				containerUsages = append(containerUsages, ContainerUsage{ContainerId: labelMaps[common.LabelNameContainerId],
+					ContainerName: labelMaps[common.LabelNameContainerName], Value: vv.Samples[0].Value})
+			}
+		}
+	}
+
+	return podUsage, containerUsages
+}
+
+type CPURatio struct {
+	//the min of cpu ratio for pods
+	MinCPURatio uint64 `json:"minCPURatio,omitempty"`
+
+	//the step of cpu share and limit for once down-size (1-100)
+	StepCPURatio uint64 `json:"stepCPURatio,omitempty"`
+}
+
+type MemoryThrottleExecutor struct {
+	// to force gc the page cache of low level pods
+	ForceGC bool `json:"forceGC,omitempty"`
+}
 
 type PodContext struct {
 	PodKey              types.NamespacedName
@@ -41,12 +96,32 @@ type PodContext struct {
 	ExtCpuRequest       int64
 	StartTime           *metav1.Time
 
-	podType PodType
+	PodType PodType
 
 	CPUThrottle    CPURatio
 	MemoryThrottle MemoryThrottleExecutor
 
 	DeletionGracePeriodSeconds *int32
+
+	HasBeenActioned bool
+}
+
+func HasNoExecutedPod(pods []PodContext) bool {
+	for _, p := range pods {
+		if p.HasBeenActioned == false {
+			return true
+		}
+	}
+	return false
+}
+
+func GetFirstNoExecutedPod(pods []PodContext) int {
+	for index, p := range pods {
+		if p.HasBeenActioned == false {
+			return index
+		}
+	}
+	return -1
 }
 
 func PodBasicInfoConstruct(pod *v1.Pod, stateMap map[string][]common.TimeSeries, action *ensuranceapi.AvoidanceAction, podType PodType) PodContext {
@@ -65,7 +140,7 @@ func PodBasicInfoConstruct(pod *v1.Pod, stateMap map[string][]common.TimeSeries,
 	podContext.CPUThrottle.MinCPURatio = uint64(action.Spec.Throttle.CPUThrottle.MinCPURatio)
 	podContext.CPUThrottle.StepCPURatio = uint64(action.Spec.Throttle.CPUThrottle.StepCPURatio)
 
-	podContext.podType = podType
+	podContext.PodType = podType
 
 	return podContext
 }
