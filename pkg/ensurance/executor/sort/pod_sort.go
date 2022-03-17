@@ -5,13 +5,13 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/gocrane/crane/pkg/ensurance/executor"
+	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
 )
 
 // RankFunc sorts the pods
-type RankFunc func(pods []executor.PodContext)
+type RankFunc func(pods []podinfo.PodContext)
 
-var sortFunc = map[string]func(p1, p2 executor.PodContext) int32{
+var sortFunc = map[string]func(p1, p2 podinfo.PodContext) int32{
 	"ExtCpuBeUsed":     extCpuBeUsed,
 	"ClassAndPriority": classAndPriority,
 	"ExtCpuUsage":      extCpuUsage,
@@ -40,7 +40,7 @@ func RankFuncConstruct(customize []string) RankFunc {
 }
 
 // runningTime compares pods by pod's start time
-func runningTime(p1, p2 executor.PodContext) int32 {
+func runningTime(p1, p2 podinfo.PodContext) int32 {
 	t1 := p1.StartTime
 	t2 := p2.StartTime
 
@@ -61,8 +61,8 @@ func runningTime(p1, p2 executor.PodContext) int32 {
 }
 
 // classAndPriority compares pods by pod's ClassAndPriority
-func classAndPriority(p1, p2 executor.PodContext) int32 {
-	return executor.CompareClassAndPriority(p1.ClassAndPriority, p2.ClassAndPriority)
+func classAndPriority(p1, p2 podinfo.PodContext) int32 {
+	return podinfo.CompareClassAndPriority(p1.ClassAndPriority, p2.ClassAndPriority)
 }
 
 // Cmp compares p1 and p2 and returns:
@@ -71,16 +71,16 @@ func classAndPriority(p1, p2 executor.PodContext) int32 {
 //    0 if p1 == p2
 //   +1 if p1 >  p2
 //
-type cmpFunc func(p1, p2 executor.PodContext) int32
+type cmpFunc func(p1, p2 podinfo.PodContext) int32
 
 // podSorter implements the Sort interface, sorting changes within.
 type podSorter struct {
-	pods []executor.PodContext
+	pods []podinfo.PodContext
 	cmp  []cmpFunc
 }
 
 // Sort sorts the argument slice according to the less functions passed to orderedBy.
-func (ms *podSorter) Sort(pods []executor.PodContext) {
+func (ms *podSorter) Sort(pods []podinfo.PodContext) {
 	ms.pods = pods
 	sort.Sort(ms)
 }
