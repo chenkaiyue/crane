@@ -29,7 +29,7 @@ type StateCollector struct {
 	collectInterval   time.Duration
 	ifaces            []string
 	collectors        *sync.Map
-	cadvisorCollector cadvisor.Interface
+	cadvisorManager   cadvisor.Manager
 	AnalyzerChann     chan map[string][]common.TimeSeries
 	NodeResourceChann chan map[string][]common.TimeSeries
 	PodResourceChann  chan map[string][]common.TimeSeries
@@ -40,7 +40,7 @@ func NewStateCollector(nodeName string, nepLister ensuranceListers.NodeQOSEnsura
 	analyzerChann := make(chan map[string][]common.TimeSeries)
 	nodeResourceChann := make(chan map[string][]common.TimeSeries)
 	podResourceChann := make(chan map[string][]common.TimeSeries)
-	c := cadvisor.NewCadvisor(podLister)
+	c := cadvisor.NewCadvisorManager()
 	return &StateCollector{
 		nodeName:          nodeName,
 		nepLister:         nepLister,
@@ -53,7 +53,7 @@ func NewStateCollector(nodeName string, nepLister ensuranceListers.NodeQOSEnsura
 		NodeResourceChann: nodeResourceChann,
 		PodResourceChann:  podResourceChann,
 		collectors:        &sync.Map{},
-		cadvisorCollector: c,
+		cadvisorManager:   c,
 	}
 }
 
@@ -174,7 +174,7 @@ func (s *StateCollector) UpdateCollectors() {
 		}
 
 		if _, exists := s.collectors.Load(types.CadvisorCollectorType); !exists {
-			s.collectors.Store(types.CadvisorCollectorType, s.GetCadvisorCollector())
+			s.collectors.Store(types.CadvisorCollectorType, cadvisor.NewCadvisorCollector(s.podLister, s.GetCadvisorManager()))
 		}
 		break
 	}
@@ -200,8 +200,8 @@ func (s *StateCollector) GetCollectors() *sync.Map {
 	return s.collectors
 }
 
-func (s *StateCollector) GetCadvisorCollector() cadvisor.Interface {
-	return s.cadvisorCollector
+func (s *StateCollector) GetCadvisorManager() cadvisor.Manager {
+	return s.cadvisorManager
 }
 
 func (s *StateCollector) StopCollectors() {

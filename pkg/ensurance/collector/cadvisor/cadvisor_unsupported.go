@@ -13,11 +13,17 @@ import (
 )
 
 type CadvisorCollectorUnsupport struct {
+	Manager
 }
 
-var _ Interface = new(CadvisorCollectorUnsupport)
+type CadvisorManagerUnsupport struct {
+}
 
-func NewCadvisor(_ corelisters.PodLister) Interface {
+func NewCadvisorManager() Manager {
+	return &CadvisorManagerUnsupport{}
+}
+
+func NewCadvisorCollector(_ corelisters.PodLister, manager Manager) *CadvisorCollectorUnsupport {
 	return &CadvisorCollectorUnsupport{}
 }
 
@@ -33,11 +39,11 @@ func (c *CadvisorCollectorUnsupport) Collect() (map[string][]common.TimeSeries, 
 	return nil, nil
 }
 
-func (c *CadvisorCollectorUnsupport) ContainerInfoV2(containerName string, options cadvisorapiv2.RequestOptions) (map[string]cadvisorapiv2.ContainerInfo, error) {
+func (m *CadvisorManagerUnsupport) ContainerInfoV2(containerName string, options cadvisorapiv2.RequestOptions) (map[string]cadvisorapiv2.ContainerInfo, error) {
 	return nil, nil
 }
 
-func (c *CadvisorCollectorUnsupport) ContainerInfo(string, *info.ContainerInfoRequest) (*info.ContainerInfo, error) {
+func (m *CadvisorManagerUnsupport) ContainerInfo(containerName string, query *info.ContainerInfoRequest) (*info.ContainerInfo, error) {
 	return nil, nil
 }
 
