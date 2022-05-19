@@ -28,12 +28,12 @@ type ExecuteContext struct {
 	RuntimeClient pb.RuntimeServiceClient
 	RuntimeConn   *grpc.ClientConn
 
-	// Gap for metrics in WaterLineMetricsCanBeQualified
-	// Key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleDown action)
+	// Gap for metrics in EvictMetricsCanBeQualified/ThrottleMetricsCanBeQualified
+	// Key is the metric name in ThrottleMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleDown action)
 	ThrottoleDownGapToWaterLines GapToWaterLines
-	// Key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleUp action)
+	// Key is the metric name in ThrottleMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use throttleUp action)
 	ThrottoleUpGapToWaterLines GapToWaterLines
-	// key is the metric name in WaterLineMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use evict action)
+	// key is the metric name in EvictMetricsCanBeQualified, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use evict action)
 	// Only has metrics that can be quantified
 	EvictGapToWaterLines GapToWaterLines
 

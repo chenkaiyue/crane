@@ -40,8 +40,8 @@ func cpuUsage(p1, p2 podinfo.PodContext) int32 {
 
 // extCpuBeUsed compares pod by using ext resource whether
 func extCpuBeUsed(p1, p2 podinfo.PodContext) int32 {
-	use1 := utils.TransBool2Uint(p1.ExtCpuBeUsed)
-	use2 := utils.TransBool2Uint(p2.ExtCpuBeUsed)
+	use1 := utils.Bool2Uint(p1.ExtCpuBeUsed)
+	use2 := utils.Bool2Uint(p2.ExtCpuBeUsed)
 
 	return int32(use1 - use2)
 }

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func (w WaterLine) verify(t *testing.T, i int) {
@@ -29,11 +31,13 @@ func (w WaterLine) verify(t *testing.T, i int) {
 	}
 }
 
-func TestSort(t *testing.T) {
+// TestPopSmallest make sure that we can get the smallest value
+func TestPopSmallest(t *testing.T) {
 	h := WaterLine{}
 
 	for i := 20; i > 0; i-- {
 		heap.Push(&h, resource.MustParse(strconv.Itoa(i)+"m"))
+		assert.Equal(t, strconv.Itoa(i)+"m", h.PopSmallest().String())
 	}
 
 	h.verify(t, 0)

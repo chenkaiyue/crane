@@ -54,52 +54,48 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 	var totalReleased ReleaseResource
 
 	/* The step to evict:
-	1. If EvictWaterLine has metrics that not in WaterLineMetricsCanBeQualified, evict all evictPods and calculate the release resource, then return
-	2. If a metric which both in WaterLineMetricsCanBeQualified and EvictWaterLine doesn't has usage value in statemap, which means we can't get the
+	1.1 If EvictWaterLine has metrics that not in WaterLineMetricsCanBeQualified, evict all evictPods and calculate the release resource, then return
+	1.2 Or if a metric which both in WaterLineMetricsCanBeQualified and EvictWaterLine doesn't has usage value in statemap, which means we can't get the
 	   accurate value from collector, then evict all evictPods and return
-	3. If there is gap to the metrics in WaterLineMetricsCanBeQualified, evict finely according to the gap
+	2. If there is gap to the metrics in WaterLineMetricsCanBeQualified, evict finely according to the gap
 		3.1 First sort pods by memory metrics, because it is incompressible more urgent; Then evict sorted pods one by one util there is
 	        no gap to waterline on memory usage
 		3.2 Then sort pods by cpu metrics, Then evict sorted pods one by one util there is no gap to waterline on cpu usage
 	*/
 
-	// If there is a metric that can't be qualified, then we evict all selected evictedPod and return
-	if e.EvictWaterLine.HasMetricNotInWaterLineMetrics() {
+	// If there is a metric that can't be qualified or If there is metric in EvictGapToWaterLines(get from trigger NodeQOSEnsurancePolicy) that can't get current usage,
+	//then evict all selected evictedPod and return
+	if e.EvictWaterLine.HasMetricNotInCanbeQualified(EvictMetricsCanBeQualified) || ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
 		errPodKeys = e.evictPods(ctx, &totalReleased)
 	} else {
 		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e)
-		if ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
-			// If there is metric in EvictGapToWaterLines(get from trigger NodeQOSEnsurancePolicy) that can't get current usage, we have to evcit all selected evictedPod
-			errPodKeys = e.evictPods(ctx, &totalReleased)
-		} else {
-			// The metrics in EvictGapToWaterLines are all in WaterLineMetricsCanBeQualified and they has current usage,we can do evict precisely
-			wg := sync.WaitGroup{}
-			var released ReleaseResource
+		// The metrics in EvictGapToWaterLines are all in WaterLineMetricsCanBeQualified and they has current usage,we can do evict precisely
+		wg := sync.WaitGroup{}
+		var released ReleaseResource
 
-			// First evict pods according to incompressible resource: memory
-			execsort.MemMetricsSorter(e.EvictPods)
-			for !ctx.EvictGapToWaterLines.TargetGapsRemoved(MemUsage) {
-				if podinfo.HasNoExecutedPod(e.EvictPods) {
-					index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
-					errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
-					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
-				}
+		// First evict pods according to incompressible resource: memory
+		execsort.MemMetricsSorter(e.EvictPods)
+		for !ctx.EvictGapToWaterLines.TargetGapsRemoved(MemUsage) {
+			if podinfo.HasNoExecutedPod(e.EvictPods) {
+				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
+				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
+				errPodKeys = append(errPodKeys, errKeys...)
+				ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
+				ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
 			}
-			// Then evict pods according to compressible resource: cpu
-			execsort.CpuMetricsSorter(e.EvictPods)
-			for !ctx.EvictGapToWaterLines.TargetGapsRemoved(CpuUsage) {
-				if podinfo.HasNoExecutedPod(e.EvictPods) {
-					index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
-					errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
-					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
-				}
-			}
-			wg.Wait()
 		}
+		// Then evict pods according to compressible resource: cpu
+		execsort.CpuMetricsSorter(e.EvictPods)
+		for !ctx.EvictGapToWaterLines.TargetGapsRemoved(CpuUsage) {
+			if podinfo.HasNoExecutedPod(e.EvictPods) {
+				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
+				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
+				errPodKeys = append(errPodKeys, errKeys...)
+				ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
+				ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+			}
+		}
+		wg.Wait()
 	}
 
 	if len(errPodKeys) != 0 {

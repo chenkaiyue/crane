@@ -81,7 +81,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 	*/
 
 	// If there is a metric that can't be qualified, then we throttle all selected throttlePods and return
-	if t.ThrottleDownWaterLine.HasMetricNotInWaterLineMetrics() {
+	if t.ThrottleDownWaterLine.HasMetricNotInCanbeQualified(ThrottleMetricsCanBeQualified) {
 		errPodKeys = t.throttlePods(ctx, &totalReleased)
 	} else {
 		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
@@ -239,7 +239,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 	*/
 
 	// If there is a metric that can't be qualified, then we do evict for all selected evictedPod and return, because all evictedPod has been evicted
-	if t.ThrottleUpWaterLine.HasMetricNotInWaterLineMetrics() {
+	if t.ThrottleUpWaterLine.HasMetricNotInCanbeQualified(ThrottleMetricsCanBeQualified) {
 		errPodKeys = t.restorePods(ctx, &totalReleased)
 	} else {
 		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
