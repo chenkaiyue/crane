@@ -33,7 +33,7 @@ func RankFuncConstruct(customize []string) RankFunc {
 			rankFunc = orderedBy(cmp...).Sort
 		}
 	} else {
-		rankFunc = CpuMetricsSorter
+		rankFunc = CpuUsageSorter
 	}
 
 	return rankFunc
