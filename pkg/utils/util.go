@@ -75,7 +75,7 @@ func StringPtr(str string) *string {
 	return &str
 }
 
-func TransBool2Uint(b bool) uint {
+func Bool2Uint(b bool) uint {
 	if b {
 		return 1
 	} else {

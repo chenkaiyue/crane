@@ -532,13 +532,13 @@ func combineThrottleWaterLine(e *executor.ThrottleExecutor, ac ecache.ActionCont
 		for _, ensurance := range ac.Nep.Spec.ObjectiveEnsurances {
 			if ensurance.Name == ac.ObjectiveEnsuranceName {
 				if e.ThrottleDownWaterLine == nil {
-					e.ThrottleDownWaterLine = make(map[string]*executor.WaterLine)
+					e.ThrottleDownWaterLine = make(map[executor.WaterLineMetric]*executor.WaterLine)
 				}
 				// Use a heap here, so we don't need to use <nepName>-<MetricRuleName> as value, just use <MetricRuleName>
-				if e.ThrottleDownWaterLine[ensurance.MetricRule.Name] == nil {
-					e.ThrottleDownWaterLine[ensurance.MetricRule.Name] = &executor.WaterLine{}
+				if e.ThrottleDownWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] == nil {
+					e.ThrottleDownWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] = &executor.WaterLine{}
 				}
-				heap.Push(e.ThrottleDownWaterLine[ensurance.MetricRule.Name], ensurance.MetricRule.Value)
+				heap.Push(e.ThrottleDownWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)], ensurance.MetricRule.Value)
 			}
 		}
 	}
@@ -547,12 +547,12 @@ func combineThrottleWaterLine(e *executor.ThrottleExecutor, ac ecache.ActionCont
 		for _, ensurance := range ac.Nep.Spec.ObjectiveEnsurances {
 			if ensurance.Name == ac.ObjectiveEnsuranceName {
 				if e.ThrottleUpWaterLine == nil {
-					e.ThrottleUpWaterLine = make(map[string]*executor.WaterLine)
+					e.ThrottleUpWaterLine = make(map[executor.WaterLineMetric]*executor.WaterLine)
 				}
-				if e.ThrottleUpWaterLine[ensurance.MetricRule.Name] == nil {
-					e.ThrottleUpWaterLine[ensurance.MetricRule.Name] = &executor.WaterLine{}
+				if e.ThrottleUpWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] == nil {
+					e.ThrottleUpWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] = &executor.WaterLine{}
 				}
-				heap.Push(e.ThrottleUpWaterLine[ensurance.MetricRule.Name], ensurance.MetricRule.Value)
+				heap.Push(e.ThrottleUpWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)], ensurance.MetricRule.Value)
 			}
 		}
 	}
@@ -563,12 +563,12 @@ func combineEvictWaterLine(e *executor.EvictExecutor, ac ecache.ActionContext) {
 		for _, ensurance := range ac.Nep.Spec.ObjectiveEnsurances {
 			if ensurance.Name == ac.ObjectiveEnsuranceName {
 				if e.EvictWaterLine == nil {
-					e.EvictWaterLine = make(map[string]*executor.WaterLine)
+					e.EvictWaterLine = make(map[executor.WaterLineMetric]*executor.WaterLine)
 				}
-				if e.EvictWaterLine[ensurance.MetricRule.Name] == nil {
-					e.EvictWaterLine[ensurance.MetricRule.Name] = &executor.WaterLine{}
+				if e.EvictWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] == nil {
+					e.EvictWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)] = &executor.WaterLine{}
 				}
-				heap.Push(e.EvictWaterLine[ensurance.MetricRule.Name], ensurance.MetricRule.Value)
+				heap.Push(e.EvictWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)], ensurance.MetricRule.Value)
 			}
 		}
 	}
