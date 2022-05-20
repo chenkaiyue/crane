@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"github.com/gocrane/crane/pkg/ensurance/executor/metric"
 	"math"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -196,6 +197,16 @@ func (e WaterLines) HasMetricNotInCanbeQualified(MetricsCanBeQualified []WaterLi
 			}
 		}
 		if !existInWaterLineMetrics {
+			return true
+		}
+	}
+	return false
+}
+
+// HasMetricThrottleAble judges that if there are metrics in WaterLines e that not exist in EvictMetricsCanBeQualified/ThrottleMetricsCanBeQualified
+func (e WaterLines) HasMetricThrottleAble() bool {
+	for m := range e {
+		if metric.MetricMap[WaterLineMetric(m)].ThrottleAble == true {
 			return true
 		}
 	}
