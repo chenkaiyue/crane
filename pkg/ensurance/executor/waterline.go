@@ -104,7 +104,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		}
 
 		// Get the waterLine for each metric in WaterLineMetricsCanBeQualified
-		evictWaterLine, evictExist := evictExecutor.EvictWaterLine[string(m)]
+		evictWaterLine, evictExist := evictExecutor.EvictWaterLine[m]
 
 		// If metric not exist in EvictWaterLine, eviceGapToWaterLines of metric will can't be calculated
 		if !evictExist {
@@ -134,8 +134,8 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		}
 
 		// Get the waterLine for each metric in WaterLineMetricsCanBeQualified
-		throttleDownWaterLine, throttleDownExist := throttleExecutor.ThrottleDownWaterLine[string(m)]
-		throttleUpWaterLine, throttleUpExist := throttleExecutor.ThrottleUpWaterLine[string(m)]
+		throttleDownWaterLine, throttleDownExist := throttleExecutor.ThrottleDownWaterLine[m]
+		throttleUpWaterLine, throttleUpExist := throttleExecutor.ThrottleUpWaterLine[m]
 
 		// If a metric does not exist in ThrottleDownWaterLine, throttleDownGapToWaterLines of this metric will can't be calculated
 		if !throttleDownExist {
@@ -188,14 +188,14 @@ func (g GapToWaterLines) HasUsageMissedMetric() bool {
 }
 
 // WaterLines 's key is the metric name, value is waterline which get from each objectiveEnsurance.metricRule.value
-type WaterLines map[string]*WaterLine
+type WaterLines map[WaterLineMetric]*WaterLine
 
 // HasMetricNotInCanbeQualified judges that if there are metrics in WaterLines e that not exist in EvictMetricsCanBeQualified/ThrottleMetricsCanBeQualified
 func (e WaterLines) HasMetricNotInCanbeQualified(MetricsCanBeQualified []WaterLineMetric) bool {
 	for metric := range e {
 		var existInWaterLineMetrics = false
 		for _, v := range MetricsCanBeQualified {
-			if metric == string(v) {
+			if metric == v {
 				existInWaterLineMetrics = true
 				break
 			}
