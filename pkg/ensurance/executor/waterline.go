@@ -76,14 +76,14 @@ func (w WaterLine) String() string {
 }
 
 // GapToWaterLines's key is metric name, value is the difference between usage and the smallest waterline
-type GapToWaterLines map[string]float64
+type GapToWaterLines map[WaterLineMetric]float64
 
 // Only calculate gap for metrics that can be quantified
 func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 	throttleExecutor ThrottleExecutor, evictExecutor EvictExecutor) (
 	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines GapToWaterLines) {
 
-	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines = make(map[string]float64), make(map[string]float64), make(map[string]float64)
+	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines = make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64)
 
 	for _,m := range EvictMetricsCanBeQualified {
 		// Get the series for each metric
@@ -91,7 +91,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !ok {
 			klog.Warningf("Metric %s not found from collector stateMap", string(m))
 			// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
-			eviceGapToWaterLines[string(m)] = MissedCurrentUsage
+			eviceGapToWaterLines[m] = MissedCurrentUsage
 			continue
 		}
 
@@ -108,7 +108,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !evictExist {
 			delete(eviceGapToWaterLines, string(m))
 		} else {
-			eviceGapToWaterLines[string(m)] = maxUsed - float64(evictWaterLine.PopSmallest().Value())
+			eviceGapToWaterLines[m] = maxUsed - float64(evictWaterLine.PopSmallest().Value())
 		}
 	}
 
@@ -118,8 +118,8 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !ok {
 			klog.Warningf("Metric %s not found from collector stateMap", string(m))
 			// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
-			throttleDownGapToWaterLines[string(m)] = MissedCurrentUsage
-			throttleUpGapToWaterLines[string(m)] = MissedCurrentUsage
+			throttleDownGapToWaterLines[m] = MissedCurrentUsage
+			throttleUpGapToWaterLines[m] = MissedCurrentUsage
 			continue
 		}
 
@@ -137,7 +137,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !throttleDownExist {
 			delete(throttleDownGapToWaterLines, string(m))
 		} else {
-			throttleDownGapToWaterLines[string(m)] = maxUsed - float64(throttleDownWaterLine.PopSmallest().Value())
+			throttleDownGapToWaterLines[m] = maxUsed - float64(throttleDownWaterLine.PopSmallest().Value())
 		}
 
 		// If metric not exist in ThrottleUpWaterLine, throttleUpGapToWaterLines of metric will can't be calculated
@@ -145,7 +145,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 			delete(throttleUpGapToWaterLines, string(m))
 		} else {
 			// Attention: different with throttleDown and evict
-			throttleUpGapToWaterLines[string(m)] = float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed
+			throttleUpGapToWaterLines[m] = float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed
 		}
 	}
 	return
@@ -163,7 +163,7 @@ func (g GapToWaterLines) GapsAllRemoved() bool {
 
 // For a specified metric in GapToWaterLines, whether there still has gap
 func (g GapToWaterLines) TargetGapsRemoved(metric WaterLineMetric) bool {
-	val, ok := g[string(metric)]
+	val, ok := g[metric]
 	if !ok {
 		return true
 	}

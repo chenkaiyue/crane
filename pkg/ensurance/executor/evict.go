@@ -80,8 +80,8 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
 				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
 				errPodKeys = append(errPodKeys, errKeys...)
-				ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
-				ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+				ctx.EvictGapToWaterLines[MemUsage] -= released.MemUsage
+				ctx.EvictGapToWaterLines[CpuUsage] -= released.CpuUsage
 			}
 		}
 		// Then evict pods according to compressible resource: cpu
@@ -91,8 +91,8 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
 				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
 				errPodKeys = append(errPodKeys, errKeys...)
-				ctx.EvictGapToWaterLines[string(MemUsage)] -= released.MemUsage
-				ctx.EvictGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+				ctx.EvictGapToWaterLines[MemUsage] -= released.MemUsage
+				ctx.EvictGapToWaterLines[CpuUsage] -= released.CpuUsage
 			}
 		}
 		wg.Wait()

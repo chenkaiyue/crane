@@ -102,8 +102,8 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 					index := podinfo.GetFirstNoExecutedPod(t.ThrottleDownPods)
 					errKeys, released = t.throttleOnePod(ctx, index, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleDownGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.ThrottoleDownGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+					ctx.ThrottoleDownGapToWaterLines[MemUsage] -= released.MemUsage
+					ctx.ThrottoleDownGapToWaterLines[CpuUsage] -= released.CpuUsage
 				}
 			}
 			// Then throttle pods according to compressible resource: cpu
@@ -113,8 +113,8 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 					index := podinfo.GetFirstNoExecutedPod(t.ThrottleDownPods)
 					errKeys, released = t.throttleOnePod(ctx, index, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleDownGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.ThrottoleDownGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+					ctx.ThrottoleDownGapToWaterLines[MemUsage] -= released.MemUsage
+					ctx.ThrottoleDownGapToWaterLines[CpuUsage] -= released.CpuUsage
 				}
 			}
 		}
@@ -261,8 +261,8 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 					index := podinfo.GetFirstNoExecutedPod(t.ThrottleUpPods)
 					errKeys, released = t.restoreOnePod(ctx, index, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleUpGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.ThrottoleUpGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+					ctx.ThrottoleUpGapToWaterLines[MemUsage] -= released.MemUsage
+					ctx.ThrottoleUpGapToWaterLines[CpuUsage] -= released.CpuUsage
 				}
 			}
 			// Then restore for compressible resource: cpu
@@ -273,8 +273,8 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 					index := podinfo.GetFirstNoExecutedPod(t.ThrottleUpPods)
 					errKeys, released = t.restoreOnePod(ctx, index, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleUpGapToWaterLines[string(MemUsage)] -= released.MemUsage
-					ctx.ThrottoleUpGapToWaterLines[string(CpuUsage)] -= released.CpuUsage
+					ctx.ThrottoleUpGapToWaterLines[MemUsage] -= released.MemUsage
+					ctx.ThrottoleUpGapToWaterLines[CpuUsage] -= released.CpuUsage
 				}
 			}
 		}
