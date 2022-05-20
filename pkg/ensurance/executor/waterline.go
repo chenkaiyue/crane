@@ -85,7 +85,9 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 
 	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines = make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64)
 
-	for _,m := range EvictMetricsCanBeQualified {
+	// Traverse EvictAbleMetric but not evictExecutor.EvictWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
+	// must come from EvictAbleMetrics
+	for _,m := range metric.GetEvictAbleMetricName() {
 		// Get the series for each metric
 		series, ok := stateMap[string(m)]
 		if !ok {
@@ -112,7 +114,9 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		}
 	}
 
-	for _, m := range ThrottleMetricsCanBeQualified {
+	// Traverse ThrottleAbleMetricName but not throttleExecutor.ThrottleDownWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
+	// must come from ThrottleAbleMetrics
+	for _,m := range metric.GetThrottleAbleMetricName() {
 		// Get the series for each metric
 		series, ok := stateMap[string(m)]
 		if !ok {

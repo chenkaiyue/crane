@@ -70,7 +70,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 	// TODO: totalReleasedResource used for prom metrics
 	var totalReleased ReleaseResource
 
-	hasMetricThrottleAble := t.ThrottleDownWaterLine.HasMetricNotInCanbeQualified
+	hasMetricNotThrottleQualified := t.ThrottleDownWaterLine.HasMetricNotInCanbeQualified
 
 	/* The step to throttle:
 	1. If ThrottleDownWaterLine has metrics that not in WaterLineMetricsCanBeQualified, throttle all ThrottleDownPods and calculate the release resource, then return

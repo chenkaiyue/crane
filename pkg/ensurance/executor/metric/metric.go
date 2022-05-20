@@ -30,4 +30,22 @@ func registerMetricMap(m metric) {
 	MetricMap[m.Name] = m
 }
 
+func GetThrottleAbleMetricName() (throttleAbleMetricList []executor.WaterLineMetric) {
+	for _, m := range MetricMap {
+		if m.ThrottleAble {
+			throttleAbleMetricList = append(throttleAbleMetricList, m.Name)
+		}
+	}
+	return
+}
+
+func GetEvictAbleMetricName() (evictAbleMetricList []executor.WaterLineMetric) {
+	for _, m := range MetricMap {
+		if m.EvictAble {
+			evictAbleMetricList = append(evictAbleMetricList, m.Name)
+		}
+	}
+	return
+}
+
 
