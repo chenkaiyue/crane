@@ -2,15 +2,17 @@ package metric
 
 import (
 	"fmt"
+	"sync"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
+
 	"github.com/gocrane/crane/pkg/ensurance/executor"
 	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
 	"github.com/gocrane/crane/pkg/ensurance/executor/sort"
 	cruntime "github.com/gocrane/crane/pkg/ensurance/runtime"
 	"github.com/gocrane/crane/pkg/metrics"
 	"github.com/gocrane/crane/pkg/utils"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
-	"sync"
 )
 
 func init() {
@@ -18,21 +20,21 @@ func init() {
 }
 
 var cpu = metric{
-	Name:              executor.CpuUsage,
-	SortAble:          true,
-	SortFunc:          sort.CpuMetricsSorter,
+	Name:     executor.CpuUsage,
+	SortAble: true,
+	SortFunc: sort.CpuMetricsSorter,
 
 	ThrottleAble:      true,
 	ThrottleQualified: true,
 	ThrottleFunc:      throttleOnePodCpu,
 	RestoreFunc:       restoreOnePodCpu,
 
-	EvictAble:         true,
-	EvictQualified:    true,
-	EvictFunc:         evictOnePodCpu,
+	EvictAble:      true,
+	EvictQualified: true,
+	EvictFunc:      evictOnePodCpu,
 }
 
-func throttleOnePodCpu(ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, ThrottleDownPods executor.ThrottlePods) (errPodKeys []string, released executor.ReleaseResource) {
+func throttleOnePodCpu(ctx *executor.ExecuteContext, index int, ThrottleDownPods executor.ThrottlePods, totalReleasedResource *executor.ReleaseResource) (errPodKeys []string, released executor.ReleaseResource) {
 	pod, err := ctx.PodLister.Pods(ThrottleDownPods[index].PodKey.Namespace).Get(ThrottleDownPods[index].PodKey.Name)
 	if err != nil {
 		errPodKeys = append(errPodKeys, fmt.Sprintf("pod %s not found", ThrottleDownPods[index].PodKey.String()))
@@ -99,13 +101,13 @@ func throttleOnePodCpu(ctx *executor.ExecuteContext, index int, totalReleasedRes
 					klog.KObj(pod), v.ContainerName, containerCPUQuotaNew)
 			}
 		}
-		released = executor.ConstructRelease(ThrottleDownPods[index], containerCPUQuotaNew, v.Value)
+		released = ConstructCpuUsageRelease(ThrottleDownPods[index], containerCPUQuotaNew, v.Value)
 		totalReleasedResource.Add(released)
 	}
 	return
 }
 
-func restoreOnePodCpu(ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, ThrottleUpPods executor.ThrottlePods) (errPodKeys []string, released executor.ReleaseResource) {
+func restoreOnePodCpu(ctx *executor.ExecuteContext, index int, ThrottleUpPods executor.ThrottlePods, totalReleasedResource *executor.ReleaseResource) (errPodKeys []string, released executor.ReleaseResource) {
 	pod, err := ctx.PodLister.Pods(ThrottleUpPods[index].PodKey.Namespace).Get(ThrottleUpPods[index].PodKey.Name)
 	if err != nil {
 		errPodKeys = append(errPodKeys, "not found ", ThrottleUpPods[index].PodKey.String())
@@ -182,7 +184,7 @@ func restoreOnePodCpu(ctx *executor.ExecuteContext, index int, totalReleasedReso
 				}
 			}
 		}
-		released = executor.ConstructRelease(ThrottleUpPods[index], containerCPUQuotaNew, v.Value)
+		released = ConstructCpuUsageRelease(ThrottleUpPods[index], containerCPUQuotaNew, v.Value)
 		totalReleasedResource.Add(released)
 
 		ThrottleUpPods[index].HasBeenActioned = true
@@ -215,9 +217,35 @@ func evictOnePodCpu(wg *sync.WaitGroup, ctx *executor.ExecuteContext, index int,
 		klog.V(4).Infof("Pod %s is evicted", klog.KObj(pod))
 
 		// Calculate release resources
-		released = executor.ConstructRelease(evictPod, 0.0, 0.0)
+		released = ConstructCpuUsageRelease(evictPod, 0.0, 0.0)
 		totalReleasedResource.Add(released)
 	}(EvictPods[index])
 	return
 }
 
+func ConstructCpuUsageRelease(pod podinfo.PodContext, containerCPUQuotaNew, currentContainerCpuUsage float64) executor.ReleaseResource {
+	if pod.PodType == podinfo.Evict {
+		return executor.ReleaseResource{
+			executor.CpuUsage: pod.PodCPUUsage,
+		}
+	}
+	if pod.PodType == podinfo.ThrottleDown {
+		reduction := currentContainerCpuUsage - containerCPUQuotaNew
+		if reduction > 0 {
+			return executor.ReleaseResource{
+				executor.CpuUsage: reduction,
+			}
+		}
+		return executor.ReleaseResource{}
+	}
+	if pod.PodType == podinfo.ThrottleUp {
+		reduction := containerCPUQuotaNew - currentContainerCpuUsage
+		if reduction > 0 {
+			return executor.ReleaseResource{
+				executor.CpuUsage: reduction,
+			}
+		}
+		return executor.ReleaseResource{}
+	}
+	return executor.ReleaseResource{}
+}

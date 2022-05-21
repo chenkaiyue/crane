@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"github.com/gocrane/crane/pkg/ensurance/executor/metric"
 	"math"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/gocrane/crane/pkg/common"
 	"github.com/gocrane/crane/pkg/ensurance/collector/types"
+	"github.com/gocrane/crane/pkg/ensurance/executor/metric"
 )
 
 // Metrics that can be measured for waterLine
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	EvictMetricsCanBeQualified = []WaterLineMetric{CpuUsage, MemUsage}
+	EvictMetricsCanBeQualified    = []WaterLineMetric{CpuUsage, MemUsage}
 	ThrottleMetricsCanBeQualified = []WaterLineMetric{CpuUsage}
 )
 
@@ -87,7 +87,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 
 	// Traverse EvictAbleMetric but not evictExecutor.EvictWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
 	// must come from EvictAbleMetrics
-	for _,m := range metric.GetEvictAbleMetricName() {
+	for _, m := range metric.GetEvictAbleMetricName() {
 		// Get the series for each metric
 		series, ok := stateMap[string(m)]
 		if !ok {
@@ -116,7 +116,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 
 	// Traverse ThrottleAbleMetricName but not throttleExecutor.ThrottleDownWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
 	// must come from ThrottleAbleMetrics
-	for _,m := range metric.GetThrottleAbleMetricName() {
+	for _, m := range metric.GetThrottleAbleMetricName() {
 		// Get the series for each metric
 		series, ok := stateMap[string(m)]
 		if !ok {
@@ -207,12 +207,25 @@ func (e WaterLines) HasMetricNotInCanbeQualified(MetricsCanBeQualified []WaterLi
 	return false
 }
 
-// HasMetricThrottleAble judges that if there are metrics in WaterLines e that not exist in EvictMetricsCanBeQualified/ThrottleMetricsCanBeQualified
-func (e WaterLines) HasMetricThrottleAble() bool {
+// GetMetricsThrottleQualified divide metrics by whether metrics can be throttleQualified
+func (e WaterLines) DivideMetricsByThrottleQualified() (MetricsThrottleQualified []WaterLineMetric, MetricsNotThrottleQualified []WaterLineMetric) {
 	for m := range e {
-		if metric.MetricMap[WaterLineMetric(m)].ThrottleAble == true {
-			return true
+		if metric.MetricMap[m].ThrottleQualified == true {
+			MetricsThrottleQualified = append(MetricsThrottleQualified, m)
+		} else {
+			MetricsNotThrottleQualified = append(MetricsNotThrottleQualified, m)
 		}
 	}
-	return false
+	return
+}
+
+func (e WaterLines) DivideMetricsByEvictQualified() (MetricsEvictQualified []WaterLineMetric, MetricsNotEvictQualified []WaterLineMetric) {
+	for m := range e {
+		if metric.MetricMap[m].EvictQualified == true {
+			MetricsEvictQualified = append(MetricsEvictQualified, m)
+		} else {
+			MetricsNotEvictQualified = append(MetricsNotEvictQualified, m)
+		}
+	}
+	return
 }

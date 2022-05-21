@@ -3,25 +3,24 @@ package metric
 import (
 	"sync"
 
-	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
-
 	"github.com/gocrane/crane/pkg/ensurance/executor"
+	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
 )
 
 type metric struct {
-	Name    executor.WaterLineMetric
+	Name executor.WaterLineMetric
 
 	SortAble bool
 	SortFunc func(pods []podinfo.PodContext)
 
-	ThrottleAble bool
+	ThrottleAble      bool
 	ThrottleQualified bool
-	ThrottleFunc func(ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, ThrottleDownPods executor.ThrottlePods) (errPodKeys []string, released executor.ReleaseResource)
-	RestoreFunc func(ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, ThrottleUpPods executor.ThrottlePods) (errPodKeys []string, released executor.ReleaseResource)
+	ThrottleFunc      func(ctx *executor.ExecuteContext, index int, ThrottleDownPods executor.ThrottlePods, totalReleasedResource *executor.ReleaseResource) (errPodKeys []string, released executor.ReleaseResource)
+	RestoreFunc       func(ctx *executor.ExecuteContext, index int, ThrottleUpPods executor.ThrottlePods, totalReleasedResource *executor.ReleaseResource) (errPodKeys []string, released executor.ReleaseResource)
 
-	EvictAble bool
+	EvictAble      bool
 	EvictQualified bool
-	EvictFunc func(wg *sync.WaitGroup, ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, EvictPods executor.EvictPods) (errPodKeys []string, released executor.ReleaseResource)
+	EvictFunc      func(wg *sync.WaitGroup, ctx *executor.ExecuteContext, index int, totalReleasedResource *executor.ReleaseResource, EvictPods executor.EvictPods) (errPodKeys []string, released executor.ReleaseResource)
 }
 
 var MetricMap = make(map[executor.WaterLineMetric]metric)
@@ -47,5 +46,3 @@ func GetEvictAbleMetricName() (evictAbleMetricList []executor.WaterLineMetric) {
 	}
 	return
 }
-
-

@@ -9,11 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
+	"github.com/gocrane/crane/pkg/ensurance/executor/metric"
 	podinfo "github.com/gocrane/crane/pkg/ensurance/executor/pod-info"
 	execsort "github.com/gocrane/crane/pkg/ensurance/executor/sort"
 	"github.com/gocrane/crane/pkg/known"
 	"github.com/gocrane/crane/pkg/metrics"
-	"github.com/gocrane/crane/pkg/utils"
 )
 
 type EvictExecutor struct {
@@ -63,36 +63,30 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 		3.2 Then sort pods by cpu metrics, Then evict sorted pods one by one util there is no gap to waterline on cpu usage
 	*/
 
-	// If there is a metric that can't be qualified or If there is metric in EvictGapToWaterLines(get from trigger NodeQOSEnsurancePolicy) that can't get current usage,
-	//then evict all selected evictedPod and return
-	if e.EvictWaterLine.HasMetricNotInCanbeQualified(EvictMetricsCanBeQualified) || ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
-		errPodKeys = e.evictPods(ctx, &totalReleased)
+	metricsEvictQualified, MetricsNotEvcitQualified := e.EvictWaterLine.DivideMetricsByEvictQualified()
+
+	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
+	if len(MetricsNotEvcitQualified) != 0 {
+		errPodKeys = e.evictPods(ctx, &totalReleased, MetricsNotEvcitQualified[0])
 	} else {
 		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e)
-		// The metrics in EvictGapToWaterLines are all in WaterLineMetricsCanBeQualified and they has current usage,we can do evict precisely
+		// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQualified and has current usage, then throttle precisely
 		wg := sync.WaitGroup{}
 		var released ReleaseResource
-
-		// First evict pods according to incompressible resource: memory
-		execsort.MemMetricsSorter(e.EvictPods)
-		for !ctx.EvictGapToWaterLines.TargetGapsRemoved(MemUsage) {
-			if podinfo.HasNoExecutedPod(e.EvictPods) {
-				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
-				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
-				errPodKeys = append(errPodKeys, errKeys...)
-				ctx.EvictGapToWaterLines[MemUsage] -= released.MemUsage
-				ctx.EvictGapToWaterLines[CpuUsage] -= released.CpuUsage
+		for _, m := range metricsEvictQualified {
+			if metric.MetricMap[m].SortAble {
+				metric.MetricMap[m].SortFunc(e.EvictPods)
+			} else {
+				execsort.GeneralSorter(e.EvictPods)
 			}
-		}
-		// Then evict pods according to compressible resource: cpu
-		execsort.CpuMetricsSorter(e.EvictPods)
-		for !ctx.EvictGapToWaterLines.TargetGapsRemoved(CpuUsage) {
-			if podinfo.HasNoExecutedPod(e.EvictPods) {
-				index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
-				errKeys, released = e.evictOnePod(&wg, ctx, index, &totalReleased)
-				errPodKeys = append(errPodKeys, errKeys...)
-				ctx.EvictGapToWaterLines[MemUsage] -= released.MemUsage
-				ctx.EvictGapToWaterLines[CpuUsage] -= released.CpuUsage
+
+			for !ctx.EvictGapToWaterLines.TargetGapsRemoved(m) {
+				if podinfo.HasNoExecutedPod(e.EvictPods) {
+					index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
+					errKeys, released = metric.MetricMap[m].EvictFunc(&wg, ctx, index, &totalReleased, e.EvictPods)
+					errPodKeys = append(errPodKeys, errKeys...)
+					ctx.EvictGapToWaterLines[m] -= released[m]
+				}
 			}
 		}
 		wg.Wait()
@@ -109,42 +103,12 @@ func (e *EvictExecutor) Restore(ctx *ExecuteContext) error {
 	return nil
 }
 
-func (e *EvictExecutor) evictPods(ctx *ExecuteContext, totalReleasedResource *ReleaseResource) (errPodKeys []string) {
+func (e *EvictExecutor) evictPods(ctx *ExecuteContext, totalReleasedResource *ReleaseResource, m WaterLineMetric) (errPodKeys []string) {
 	wg := sync.WaitGroup{}
 	for i := range e.EvictPods {
-		errKeys, _ := e.evictOnePod(&wg, ctx, i, totalReleasedResource)
+		errKeys, _ := metric.MetricMap[m].EvictFunc(&wg, ctx, i, totalReleasedResource, e.EvictPods)
 		errPodKeys = append(errPodKeys, errKeys...)
 	}
 	wg.Wait()
-	return
-}
-
-func (e *EvictExecutor) evictOnePod(wg *sync.WaitGroup, ctx *ExecuteContext, index int, totalReleasedResource *ReleaseResource) (errPodKeys []string, released ReleaseResource) {
-	wg.Add(1)
-
-	go func(evictPod podinfo.PodContext) {
-		defer wg.Done()
-
-		pod, err := ctx.PodLister.Pods(evictPod.PodKey.Namespace).Get(evictPod.PodKey.Name)
-		if err != nil {
-			errPodKeys = append(errPodKeys, "not found ", evictPod.PodKey.String())
-			return
-		}
-
-		err = utils.EvictPodWithGracePeriod(ctx.Client, pod, evictPod.DeletionGracePeriodSeconds)
-		if err != nil {
-			errPodKeys = append(errPodKeys, "evict failed ", evictPod.PodKey.String())
-			klog.Warningf("Failed to evict pod %s: %v", evictPod.PodKey.String(), err)
-			return
-		}
-
-		metrics.ExecutorEvictCountsInc()
-
-		klog.V(4).Infof("Pod %s is evicted", klog.KObj(pod))
-
-		// Calculate release resources
-		released = ConstructRelease(evictPod, 0.0, 0.0)
-		totalReleasedResource.Add(released)
-	}(e.EvictPods[index])
 	return
 }
