@@ -1,9 +1,5 @@
 # Pod Sorting And Precise Execution For Crane Agent
-该proposal丰富了crane-agent的排序策略，完善了通用排序和cpu usage为主要参考的cpu维度排序；
-
-针对cpu usage，实现了执行压制/驱逐等操作时，操作到用户指定的水位线即停止的精确操作逻辑，避免了对于低优pod的过度操作；
-
-同时，该proposal实现了一套精确操作(压制/驱逐)的框架，通过完善自定义指标的一些列属性和实现，即可在无需关心具体细节的情况下，同样具有同cpu usage一样的精确操作能力，具有一定的普适性和扩展性。
+该proposal丰富了crane-agent的排序策略，完善了通用排序。并且实现了一套精准操作(压制/驱逐)的框架，在执行压制/驱逐等操作时，操作到用户指定的水位线即停止的精确操作逻辑，避免了对于低优pod的过度操作；
 
 ## Table of Contents
 
@@ -25,14 +21,13 @@
 
 <!-- /TOC -->
 ## Motivation
-当前在crane agent中，当超过NodeQOSEnsurancePolicy中指定的水位线后，执行evict，throttle等操作时会对低优先级的pod进行排序，当前排序的依据是pod的ProrityClass，之后对排序的pod进行throttle或者evict操作；
-存在的问题有：
+当前在crane-agent中，当超过NodeQOSEnsurancePolicy中指定的水位线后，执行evict，throttle等操作时先对低优先级的pod进行排序，当前排序的依据是pod的ProrityClass，然后在排序的pod进行throttle或者evict操作；
 
-1. 排序的依据是比较简单的，只能参考ProrityClass，无法满足基于其他特性的排序；同时也无法满足按照水位线精确操作对灵活排序的需求，无法满足尽快让节点达到指定的水位线的要求，当我们希望尽快降低低优业务的cpu使用量时，比如同样是低优的pod，应当在同样低优的pod中首先压制cpu使用量较多的pod，这样能够更快地降低cpu用量，保证高优业务不受影响
+目前存在的问题有：
 
-2. 当前的工作模式在触发NodeQOSEnsurancePolicy中的指标值后进行驱逐/压制操作时，会对于节点上的所有低于指定ProrityClass的pod进行操作；举一个例子，当前节点上有10个pod低于指定ProrityClass，
-   在触发水位线后，会对这10个pod都进行操作，但是实际上可能在操作完成一个pod的时候就可以低于NodeQOSEnsurancePolicy中的指标值了，剩下的pod的操作，其实是过度的，如果能以NodeQOSEnsurancePolicy中的
-   指标值作为水位线对pod进行精确的操作，操作到刚好低于水位线是更为合适的，就能避免对低优先级服务的过度影响。
+1. 排序只参考ProrityClass，无法满足基于其他特性的排序；同时也无法满足按照水位线精确操作对灵活排序的需求，无法满足尽快让节点达到指定的水位线的要求。例如我们希望尽快降低低优先级业务的cpu使用量时，应该选出cpu使用量较多的pod，这样能够更快地降低cpu用量，保障高优业务不受影响。
+
+2. 在触发NodeQOSEnsurancePolicy中指定的水位线后，会对于节点上的所有低于指定ProrityClass的pod进行操作；例如，当前节点上有10个pod低于指定ProrityClass，在触发水位线后，会对这10个pod都进行操作，但是实际上可能在操作完成对第一个pod的操作后就可以低于NodeQOSEnsurancePolicy中的指标值了，对剩下的pod的操作，属于过度操作，是可以避免的。如果能以NodeQOSEnsurancePolicy中的指标值作为水位线对pod进行精确的操作，操作到刚好低于水位线是更为合适的，就能避免对低优先级服务的过度影响。
 
 ### Goals
 
