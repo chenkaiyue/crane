@@ -73,6 +73,7 @@
 
   会首先比较两个pod是否使用了扩展的cpu资源，在都使用了的情况下，比较 扩展cpu资源使用量/ 扩展cpu资源limit的比值
 
+
 - 针对需要自定义的指标，可以通过实现如下的方法，并且随意搭配通用的排序方法即可方便地实现pod的灵活自定义排序，以<metric>代表自定义metric指标，<metric-sort-func>代表自定义的针对<metric>的排序策略
     ```go
     func <metric>Sorter(pods []podinfo.PodContext) {
@@ -118,6 +119,8 @@ type metric struct {
 }
 ```
 
+用户可以自行定义自己的metric，在构造完成后，通过registerMetricMap()进行注册即可
+
 ### 如何根据水位线进行精准控制
 
 1. 根据多个NodeQOSEnsurancePolicy及其中的objectiveEnsurances构建多条水位线；  
@@ -152,26 +155,25 @@ type metric struct {
     ![](cpu-usage-water-line.png)
 
 ### 以水位线为基准进行pod的精确操作
-该proposal对原先的analyzer进行了一定的修改，对executor的核心处理部分逻辑进行了较大的修改，大体流程是：
+该为了实现以水位线为基准进行pod的精确操作，将对analyzer部分和executor部分做一定的修改，大体流程是：
 
-在analyzer阶段构造针对不同操作（驱逐，压制等）和不同metric的水位线，将原先的排序逻辑删除，后移到需要进行正式操作的executor阶段；
+在analyzer阶段构造针对不同操作（驱逐，压制等）和不同metric的水位线，将原先的排序逻辑删除，后移到需要进行正式操作的executor阶段，并且可能会需要进行多轮排序；
 
-在executor阶段，根据水位线中的涉及指标的特点进行相应的排序，获取最新用量，构造GapToWaterLines，并进行精确操作
+在executor阶段，根据水位线中的涉及的指标进行其相应的排序，获取最新用量，构造GapToWaterLines，并进行精确操作
 
 #### analyzer阶段
 在该阶段进行NodeQOSEnsurancePolicy到WaterLines的转换，并对相同actionName和metricrule的规则进行合并，具体内容上文已经介绍过了
 
 #### executor阶段
-这里首先介绍压制
+压制过程：
 
-1. 首先分析ThrottoleDownGapToWaterLines中涉及的metrics，将这些metrics区分为可Qualified和不可Qualified的
-2. 如果存在不可Qualified的metric，则选择其中一个throttleAble的metric对所有的pod进行压制操作，因为但凡存在一个不可Qualified的metric，就无法进行精确的计算
-3. 通过getStateFunc()获取当前节点和workload的最新用量
-4. 依据上面的ThrottoleDownGapToWaterLines和实时用量构造GapToWaterLine，需要注意的是，在构造GapToWaterLine时，会以注册过的metric进行遍历，所以最终构造出来的GapToWaterLine，也会是ThrottoleDownGapToWaterLines
+1. 首先分析ThrottoleDownGapToWaterLines中涉及的metrics，将这些metrics根据其Qualified属性区分为两部分，如果存在不可Qualified的metric，则选择其中一个throttleAble（具有throttleFunc）的metric对所有的pod进行压制操作，因为但凡存在一个不可Qualified的metric，就无法进行精确的计算
+2. 通过getStateFunc()获取当前节点和workload的最新用量
+3. 依据上面的ThrottoleDownGapToWaterLines和实时用量构造GapToWaterLine，需要注意的是，在构造GapToWaterLine时，会以注册过的metric进行遍历，所以最终构造出来的GapToWaterLine中的metrics，会是ThrottoleDownGapToWaterLines
    中注册过的metric，避免了在NodeQOSEnsurancePolicy中配置错误不存在或未注册metric的情况。
-5. 遍历ThrottoleDownGapToWaterLines中qualified的metric
-6. 如果metric具有排序方法则直接使用其SortFunc进行排序，如果没有就使用GeneralSorter
-7. 使用其ThrottleFunc对pod进行压制，并计算释放出来的对应metric的资源量，直到ThrottoleDownGapToWaterLines中对应metric的gap已不存在
+4. 遍历ThrottoleDownGapToWaterLines中qualified的metric
+5. 如果metric具有排序方法则直接使用其SortFunc进行排序，如果没有就使用GeneralSorter
+6. 使用其metric对应的ThrottleFunc对pod进行压制，并计算释放出来的对应metric的资源量，直到ThrottoleDownGapToWaterLines中对应的gap已不存在
 ```go
 metricsQualified, MetricsNotQualified := ThrottleDownWaterLine.DivideMetricsByQualified()
 
@@ -203,9 +205,9 @@ if len(MetricsNotThrottleQualified) != 0 {
 }
 ```
 
-其次介绍驱逐
+驱逐过程：
 
-驱逐和压制的流程是一样的，除了在对pod进行操作的时候需要额外判断一下pod是否已经被驱逐了，取出一个没有执行过的pod，执行驱逐操作，并计算释放出的各metric资源量，同时在对应水位线中减去释放的值，直到满足当前metric水位线要求
+驱逐和压制的流程是一样的，除了在对pod进行操作的时候需要额外判断一下pod是否已经被驱逐了；取出一个没有执行过的pod，执行驱逐操作，并计算释放出的各metric资源量，同时在对应水位线中减去释放的值，直到满足当前metric水位线要求
 ```go
 metricsEvictQualified, MetricsNotEvcitQualified := EvictWaterLine.DivideMetricsByEvictQualified()
 
