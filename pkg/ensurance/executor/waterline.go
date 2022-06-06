@@ -11,6 +11,7 @@ import (
 )
 
 // Metrics that can be measured for waterLine
+// Should be consistent with metrics in collector/types/types.go
 type WaterLineMetric string
 
 // Be consistent with metrics in collector/types/types.go
@@ -22,11 +23,6 @@ const (
 const (
 	// We can't get current use, so can't do actions precisely, just evict every evictedPod
 	MissedCurrentUsage float64 = math.MaxFloat64
-)
-
-var (
-	EvictMetricsCanBeQualified    = []WaterLineMetric{CpuUsage, MemUsage}
-	ThrottleMetricsCanBeQualified = []WaterLineMetric{CpuUsage}
 )
 
 // An WaterLine is a min-heap of Quantity. The values come from each objectiveEnsurance.metricRule.value
@@ -77,59 +73,50 @@ func (w WaterLine) String() string {
 // WaterLines 's key is the metric name, value is waterline which get from each objectiveEnsurance.metricRule.value
 type WaterLines map[WaterLineMetric]*WaterLine
 
-// HasMetricNotInCanbeQualified judges that if there are metrics in WaterLines e that not exist in EvictMetricsCanBeQualified/ThrottleMetricsCanBeQualified
-func (e WaterLines) HasMetricNotInCanbeQualified(MetricsCanBeQualified []WaterLineMetric) bool {
-	for metric := range e {
-		var existInWaterLineMetrics = false
-		for _, v := range MetricsCanBeQualified {
-			if metric == v {
-				existInWaterLineMetrics = true
-				break
-			}
-		}
-		if !existInWaterLineMetrics {
-			return true
-		}
-	}
-	return false
-}
-
-// GetMetricsThrottleQualified divide metrics by whether metrics can be throttleQualified
-func (e WaterLines) DivideMetricsByThrottleQualified() (MetricsThrottleQualified []WaterLineMetric, MetricsNotThrottleQualified []WaterLineMetric) {
+// DivideMetricsByThrottleQuantified divide metrics by whether metrics can be throttleQuantified
+func (e WaterLines) DivideMetricsByThrottleQuantified() (MetricsThrottleQuantified []WaterLineMetric, MetricsNotThrottleQuantified []WaterLineMetric) {
 	for m := range e {
-		if MetricMap[m].ThrottleQualified == true {
-			MetricsThrottleQualified = append(MetricsThrottleQualified, m)
+		if MetricMap[m].ThrottleQuantified == true {
+			MetricsThrottleQuantified = append(MetricsThrottleQuantified, m)
 		} else {
-			MetricsNotThrottleQualified = append(MetricsNotThrottleQualified, m)
+			MetricsNotThrottleQuantified = append(MetricsNotThrottleQuantified, m)
 		}
 	}
 	return
 }
 
-func (e WaterLines) DivideMetricsByEvictQualified() (MetricsEvictQualified []WaterLineMetric, MetricsNotEvictQualified []WaterLineMetric) {
+func (e WaterLines) DivideMetricsByEvictQuantified() (MetricsEvictQuantified []WaterLineMetric, MetricsNotEvictQuantified []WaterLineMetric) {
 	for m := range e {
-		if MetricMap[m].EvictQualified == true {
-			MetricsEvictQualified = append(MetricsEvictQualified, m)
+		if MetricMap[m].EvictQuantified == true {
+			MetricsEvictQuantified = append(MetricsEvictQuantified, m)
 		} else {
-			MetricsNotEvictQualified = append(MetricsNotEvictQualified, m)
+			MetricsNotEvictQuantified = append(MetricsNotEvictQuantified, m)
 		}
 	}
 	return
 }
 
-func (e WaterLines) GetMetricsThrottleAble() (ThrottleAbleMetrics []WaterLineMetric) {
+func (e WaterLines) GetHighestPriorityThrottleAbleMetric() (highestPrioriyMetric WaterLineMetric) {
+	highestActionPriority := 0
 	for m := range e {
 		if MetricMap[m].ThrottleAble == true {
-			ThrottleAbleMetrics = append(ThrottleAbleMetrics, m)
+			if MetricMap[m].ActionPriority >= highestActionPriority {
+				highestPrioriyMetric = m
+				highestActionPriority = MetricMap[m].ActionPriority
+			}
 		}
 	}
 	return
 }
 
-func (e WaterLines) GetMetricsEvictAble() (EvictAbleMetrics []WaterLineMetric) {
+func (e WaterLines) GetHighestPriorityEvictAbleMetric() (highestPrioriyMetric WaterLineMetric) {
+	highestActionPriority := 0
 	for m := range e {
 		if MetricMap[m].EvictAble == true {
-			EvictAbleMetrics = append(EvictAbleMetrics, m)
+			if MetricMap[m].ActionPriority >= highestActionPriority {
+				highestPrioriyMetric = m
+				highestActionPriority = MetricMap[m].ActionPriority
+			}
 		}
 	}
 	return
@@ -163,7 +150,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 			maxUsed = series[0].Samples[0].Value
 		}
 
-		// Get the waterLine for each metric in WaterLineMetricsCanBeQualified
+		// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
 		evictWaterLine, evictExist := evictExecutor.EvictWaterLine[m]
 
 		// If metric not exist in EvictWaterLine, eviceGapToWaterLines of metric will can't be calculated
@@ -193,7 +180,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 			maxUsed = series[0].Samples[0].Value
 		}
 
-		// Get the waterLine for each metric in WaterLineMetricsCanBeQualified
+		// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
 		throttleDownWaterLine, throttleDownExist := throttleExecutor.ThrottleDownWaterLine[m]
 		throttleUpWaterLine, throttleUpExist := throttleExecutor.ThrottleUpWaterLine[m]
 

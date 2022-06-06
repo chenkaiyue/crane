@@ -19,18 +19,19 @@ func init() {
 }
 
 var cpu_usage = metric{
-	Name:     CpuUsage,
-	SortAble: true,
-	SortFunc: sort.CpuUsageSorter,
+	Name:           CpuUsage,
+	ActionPriority: 5,
+	SortAble:       true,
+	SortFunc:       sort.CpuUsageSorter,
 
-	ThrottleAble:      true,
-	ThrottleQualified: true,
-	ThrottleFunc:      throttleOnePodCpu,
-	RestoreFunc:       restoreOnePodCpu,
+	ThrottleAble:       true,
+	ThrottleQuantified: true,
+	ThrottleFunc:       throttleOnePodCpu,
+	RestoreFunc:        restoreOnePodCpu,
 
-	EvictAble:      true,
-	EvictQualified: true,
-	EvictFunc:      evictOnePodCpu,
+	EvictAble:       true,
+	EvictQuantified: true,
+	EvictFunc:       evictOnePodCpu,
 }
 
 func throttleOnePodCpu(ctx *ExecuteContext, index int, ThrottleDownPods ThrottlePods, totalReleasedResource *ReleaseResource) (errPodKeys []string, released ReleaseResource) {
