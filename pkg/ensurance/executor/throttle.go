@@ -81,7 +81,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
 	if len(MetricsNotThrottleQualified) != 0 {
 		throttleAbleMetrics := t.ThrottleDownWaterLine.GetMetricsThrottleAble()
-		if len(throttleAbleMetrics) != 0{
+		if len(throttleAbleMetrics) != 0 {
 			errPodKeys = t.throttlePods(ctx, &totalReleased, throttleAbleMetrics[0])
 		}
 	} else {
