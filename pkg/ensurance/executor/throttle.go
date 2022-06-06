@@ -96,7 +96,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 			}
 
 			for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {
-				for index, _ := range t.ThrottleDownPods {
+				for index := range t.ThrottleDownPods {
 					errKeys, released = MetricMap[m].ThrottleFunc(ctx, index, t.ThrottleDownPods, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
 					ctx.ThrottoleDownGapToWaterLines[m] -= released[m]
@@ -167,7 +167,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 			t.ThrottleUpPods = Reverse(t.ThrottleUpPods)
 
 			for !ctx.ThrottoleUpGapToWaterLines.TargetGapsRemoved(m) {
-				for index, _ := range t.ThrottleUpPods {
+				for index := range t.ThrottleUpPods {
 					errKeys, released = MetricMap[m].RestoreFunc(ctx, index, t.ThrottleUpPods, &totalReleased)
 					errPodKeys = append(errPodKeys, errKeys...)
 					ctx.ThrottoleUpGapToWaterLines[m] -= released[m]
