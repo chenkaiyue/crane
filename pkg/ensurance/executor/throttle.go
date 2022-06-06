@@ -68,38 +68,44 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 	var totalReleased ReleaseResource
 
 	/* The step to throttle:
-	1. If ThrottleDownWaterLine has metrics that not in WaterLineMetricsCanBeQualified, throttle all ThrottleDownPods and calculate the release resource, then return
-	2. If a metric which both in WaterLineMetricsCanBeQualified and ThrottleDownWaterLine doesn't has usage value in statemap, which means we can't get the
-	   accurate value from collector, then throttle all ThrottleDownPods and return
-	3. If there is gap to the metrics in WaterLineMetricsCanBeQualified, throttle finely according to the gap
-		3.1 First sort pods by memory metrics, because it is incompressible more urgent; Then throttle sorted pods one by one util there is
-	        no gap to waterline on memory usage
-		3.2 Then sort pods by cpu metrics, Then throttle sorted pods one by one util there is no gap to waterline on cpu usage
+	1. If ThrottleDownWaterLine has metrics that can't be quantified, select a throttleable metric which has the highest action priority, use its throttlefunc to throttle all ThrottleDownPods, then return
+	2. Get the gaps between current usage and waterlines
+		2.1 If there is a metric that can't get current usage, select a throttleable metric which has the highest action priority, use its throttlefunc to throttle all ThrottleDownPods, then return
+		2.2 Traverse metrics that can be quantified, if there is a gap for the metric, then sort candidate pods by its SortFunc if exists, otherwise use GeneralSorter by default.
+	       Then throttle sorted pods one by one util there is no gap to waterline
 	*/
-	metricsThrottleQualified, MetricsNotThrottleQualified := t.ThrottleDownWaterLine.DivideMetricsByThrottleQualified()
+	metricsThrottleQuantified, MetricsNotThrottleQuantified := t.ThrottleDownWaterLine.DivideMetricsByThrottleQuantified()
 
-	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
-	if len(MetricsNotThrottleQualified) != 0 {
-		throttleAbleMetrics := t.ThrottleDownWaterLine.GetMetricsThrottleAble()
-		if len(throttleAbleMetrics) != 0 {
-			errPodKeys = t.throttlePods(ctx, &totalReleased, throttleAbleMetrics[0])
+	// There is a metric that can't be ThrottleQuantified, so throttle all selected pods
+	if len(MetricsNotThrottleQuantified) != 0 {
+		highestPrioriyMetric := t.ThrottleDownWaterLine.GetHighestPriorityThrottleAbleMetric()
+		if highestPrioriyMetric != "" {
+			errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
 		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
-		// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQualified and has current usage, then throttle precisely
-		var released ReleaseResource
-		for _, m := range metricsThrottleQualified {
-			if MetricMap[m].SortAble {
-				MetricMap[m].SortFunc(t.ThrottleDownPods)
-			} else {
-				execsort.GeneralSorter(t.ThrottleDownPods)
-			}
 
-			for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {
-				for index := range t.ThrottleDownPods {
-					errKeys, released = MetricMap[m].ThrottleFunc(ctx, index, t.ThrottleDownPods, &totalReleased)
-					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleDownGapToWaterLines[m] -= released[m]
+		if ctx.ThrottoleDownGapToWaterLines.HasUsageMissedMetric() {
+			highestPrioriyMetric := t.ThrottleDownWaterLine.GetHighestPriorityThrottleAbleMetric()
+			if highestPrioriyMetric != "" {
+				errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
+			}
+		} else {
+			// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
+			var released ReleaseResource
+			for _, m := range metricsThrottleQuantified {
+				if MetricMap[m].SortAble {
+					MetricMap[m].SortFunc(t.ThrottleDownPods)
+				} else {
+					execsort.GeneralSorter(t.ThrottleDownPods)
+				}
+
+				for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {
+					for index := range t.ThrottleDownPods {
+						errKeys, released = MetricMap[m].ThrottleFunc(ctx, index, t.ThrottleDownPods, &totalReleased)
+						errPodKeys = append(errPodKeys, errKeys...)
+						ctx.ThrottoleDownGapToWaterLines[m] -= released[m]
+					}
 				}
 			}
 		}
@@ -140,37 +146,45 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 	var totalReleased ReleaseResource
 
 	/* The step to restore:
-	1. If ThrottleUpWaterLine has metrics that not in WaterLineMetricsCanBeQualified, restore all ThrottleUpPods and calculate the difference of resource, then return
-	2. If a metric which both in WaterLineMetricsCanBeQualified and ThrottleUpWaterLine doesn't has usage value in statemap, which means we can't get the
-	   accurate value from collector, then restore all ThrottleUpPods and return
-	3. If there is gap to the metrics in WaterLineMetricsCanBeQualified, restore finely according to the gap
-		3.1 First sort pods by memory metrics, because it is incompressible more urgent; Then restore sorted pods one by one util there is
-	        no gap to waterline on memory usage
-		3.2 Then sort pods by cpu metrics, Then restore sorted pods one by one util there is no gap to waterline on cpu usage
+	1. If ThrottleUpWaterLine has metrics that can't be quantified, select a throttleable metric which has the highest action priority, use its RestoreFunc to restore all ThrottleUpPods, then return
+	2. Get the gaps between current usage and waterlines
+		2.1 If there is a metric that can't get current usage, select a throttleable metric which has the highest action priority, use its RestoreFunc to restore all ThrottleUpPods, then return
+		2.2 Traverse metrics that can be quantified, if there is a gap for the metric, then sort candidate pods by its SortFunc if exists, otherwise use GeneralSorter by default.
+	       Then restore sorted pods one by one util there is no gap to waterline
 	*/
+	metricsThrottleQuantified, MetricsNotThrottleQuantified := t.ThrottleUpWaterLine.DivideMetricsByThrottleQuantified()
 
-	metricsThrottleQualified, MetricsNotThrottleQualified := t.ThrottleUpWaterLine.DivideMetricsByThrottleQualified()
-
-	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
-	if len(MetricsNotThrottleQualified) != 0 {
-		errPodKeys = t.restorePods(ctx, &totalReleased, MetricsNotThrottleQualified[0])
+	// There is a metric that can't be ThrottleQuantified, so restore all selected pods
+	if len(MetricsNotThrottleQuantified) != 0 {
+		highestPrioriyMetric := t.ThrottleUpWaterLine.GetHighestPriorityThrottleAbleMetric()
+		if highestPrioriyMetric != "" {
+			errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
+		}
 	} else {
 		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
-		// The metrics in ThrottoleUpGapToWaterLines are all in WaterLineMetricsCanBeQualified and has current usage, then throttle precisely
-		var released ReleaseResource
-		for _, m := range metricsThrottleQualified {
-			if MetricMap[m].SortAble {
-				MetricMap[m].SortFunc(t.ThrottleUpPods)
-			} else {
-				execsort.GeneralSorter(t.ThrottleUpPods)
-			}
-			t.ThrottleUpPods = Reverse(t.ThrottleUpPods)
 
-			for !ctx.ThrottoleUpGapToWaterLines.TargetGapsRemoved(m) {
-				for index := range t.ThrottleUpPods {
-					errKeys, released = MetricMap[m].RestoreFunc(ctx, index, t.ThrottleUpPods, &totalReleased)
-					errPodKeys = append(errPodKeys, errKeys...)
-					ctx.ThrottoleUpGapToWaterLines[m] -= released[m]
+		if ctx.ThrottoleUpGapToWaterLines.HasUsageMissedMetric() {
+			highestPrioriyMetric := t.ThrottleUpWaterLine.GetHighestPriorityThrottleAbleMetric()
+			if highestPrioriyMetric != "" {
+				errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
+			}
+		} else {
+			// The metrics in ThrottoleUpGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
+			var released ReleaseResource
+			for _, m := range metricsThrottleQuantified {
+				if MetricMap[m].SortAble {
+					MetricMap[m].SortFunc(t.ThrottleUpPods)
+				} else {
+					execsort.GeneralSorter(t.ThrottleUpPods)
+				}
+				t.ThrottleUpPods = Reverse(t.ThrottleUpPods)
+
+				for !ctx.ThrottoleUpGapToWaterLines.TargetGapsRemoved(m) {
+					for index := range t.ThrottleUpPods {
+						errKeys, released = MetricMap[m].RestoreFunc(ctx, index, t.ThrottleUpPods, &totalReleased)
+						errPodKeys = append(errPodKeys, errKeys...)
+						ctx.ThrottoleUpGapToWaterLines[m] -= released[m]
+					}
 				}
 			}
 		}

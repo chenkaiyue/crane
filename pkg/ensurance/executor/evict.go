@@ -53,47 +53,53 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 	var totalReleased ReleaseResource
 
 	/* The step to evict:
-	1.1 If EvictWaterLine has metrics that not in WaterLineMetricsCanBeQualified, evict all evictPods and calculate the release resource, then return
-	1.2 Or if a metric which both in WaterLineMetricsCanBeQualified and EvictWaterLine doesn't has usage value in statemap, which means we can't get the
-	   accurate value from collector, then evict all evictPods and return
-	2. If there is gap to the metrics in WaterLineMetricsCanBeQualified, evict finely according to the gap
-		3.1 First sort pods by memory metrics, because it is incompressible more urgent; Then evict sorted pods one by one util there is
-	        no gap to waterline on memory usage
-		3.2 Then sort pods by cpu metrics, Then evict sorted pods one by one util there is no gap to waterline on cpu usage
+	1. If EvictWaterLine has metrics that can't be quantified, select a evictable metric which has the highest action priority, use its EvictFunc to evict all selected pods, then return
+	2. Get the gaps between current usage and waterlines
+		2.1 If there is a metric that can't get current usage, select a evictable metric which has the highest action priority, use its EvictFunc to evict all selected pods, then return
+		2.2 Traverse metrics that can be quantified, if there is gap for the metric, then sort candidate pods by its SortFunc if exists, otherwise use GeneralSorter by default.
+	       Then evict sorted pods one by one util there is no gap to waterline
 	*/
 
-	metricsEvictQualified, MetricsNotEvcitQualified := e.EvictWaterLine.DivideMetricsByEvictQualified()
+	metricsEvictQuantified, MetricsNotEvcitQuantified := e.EvictWaterLine.DivideMetricsByEvictQuantified()
 
-	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
-	if len(MetricsNotEvcitQualified) != 0 {
-		evictAbleMetrics := e.EvictWaterLine.GetMetricsEvictAble()
-		if len(evictAbleMetrics) != 0 {
-			errPodKeys = e.evictPods(ctx, &totalReleased, evictAbleMetrics[0])
+	// There is a metric that can't be ThrottleQuantified, so throttle all selected pods
+	if len(MetricsNotEvcitQuantified) != 0 {
+		highestPrioriyMetric := e.EvictWaterLine.GetHighestPriorityEvictAbleMetric()
+		if highestPrioriyMetric != "" {
+			errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
 		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e)
-		// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQualified and has current usage, then throttle precisely
-		wg := sync.WaitGroup{}
-		var released ReleaseResource
-		for _, m := range metricsEvictQualified {
-			if MetricMap[m].SortAble {
-				MetricMap[m].SortFunc(e.EvictPods)
-			} else {
-				execsort.GeneralSorter(e.EvictPods)
+
+		if ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
+			highestPrioriyMetric := e.EvictWaterLine.GetHighestPriorityEvictAbleMetric()
+			if highestPrioriyMetric != "" {
+				errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 			}
+		} else {
+			// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
+			var released ReleaseResource
+			wg := sync.WaitGroup{}
+			for _, m := range metricsEvictQuantified {
+				if MetricMap[m].SortAble {
+					MetricMap[m].SortFunc(e.EvictPods)
+				} else {
+					execsort.GeneralSorter(e.EvictPods)
+				}
 
-			for !ctx.EvictGapToWaterLines.TargetGapsRemoved(m) {
-				if podinfo.HasNoExecutedPod(e.EvictPods) {
-					index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
-					errKeys, released = MetricMap[m].EvictFunc(&wg, ctx, index, &totalReleased, e.EvictPods)
-					errPodKeys = append(errPodKeys, errKeys...)
+				for !ctx.EvictGapToWaterLines.TargetGapsRemoved(m) {
+					if podinfo.HasNoExecutedPod(e.EvictPods) {
+						index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
+						errKeys, released = MetricMap[m].EvictFunc(&wg, ctx, index, &totalReleased, e.EvictPods)
+						errPodKeys = append(errPodKeys, errKeys...)
 
-					e.EvictPods[index].HasBeenActioned = true
-					ctx.EvictGapToWaterLines[m] -= released[m]
+						e.EvictPods[index].HasBeenActioned = true
+						ctx.EvictGapToWaterLines[m] -= released[m]
+					}
 				}
 			}
+			wg.Wait()
 		}
-		wg.Wait()
 	}
 
 	if len(errPodKeys) != 0 {
