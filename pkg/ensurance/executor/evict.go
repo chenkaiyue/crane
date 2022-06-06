@@ -67,7 +67,7 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 	// There is a metric that can't be ThrottleQualified, so throttle all selected pods
 	if len(MetricsNotEvcitQualified) != 0 {
 		evictAbleMetrics := e.EvictWaterLine.GetMetricsEvictAble()
-		if len(evictAbleMetrics) != 0{
+		if len(evictAbleMetrics) != 0 {
 			errPodKeys = e.evictPods(ctx, &totalReleased, evictAbleMetrics[0])
 		}
 	} else {

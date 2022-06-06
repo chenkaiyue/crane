@@ -74,7 +74,6 @@ func (w WaterLine) String() string {
 	return str
 }
 
-
 // WaterLines 's key is the metric name, value is waterline which get from each objectiveEnsurance.metricRule.value
 type WaterLines map[WaterLineMetric]*WaterLine
 
@@ -135,7 +134,6 @@ func (e WaterLines) GetMetricsEvictAble() (EvictAbleMetrics []WaterLineMetric) {
 	}
 	return
 }
-
 
 // GapToWaterLines's key is metric name, value is the difference between usage and the smallest waterline
 type GapToWaterLines map[WaterLineMetric]float64
