@@ -127,7 +127,7 @@ type GapToWaterLines map[WaterLineMetric]float64
 
 // Only calculate gap for metrics that can be quantified
 func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
-	throttleExecutor ThrottleExecutor, evictExecutor EvictExecutor) (
+	throttleExecutor ThrottleExecutor, evictExecutor EvictExecutor, executeExcessPercent float64) (
 	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines GapToWaterLines) {
 
 	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines = make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64)
@@ -157,7 +157,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !evictExist {
 			delete(eviceGapToWaterLines, m)
 		} else {
-			eviceGapToWaterLines[m] = maxUsed - float64(evictWaterLine.PopSmallest().Value())
+			eviceGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(evictWaterLine.PopSmallest().Value()))
 		}
 	}
 
@@ -188,7 +188,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 		if !throttleDownExist {
 			delete(throttleDownGapToWaterLines, m)
 		} else {
-			throttleDownGapToWaterLines[m] = maxUsed - float64(throttleDownWaterLine.PopSmallest().Value())
+			throttleDownGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(throttleDownWaterLine.PopSmallest().Value()))
 		}
 
 		// If metric not exist in ThrottleUpWaterLine, throttleUpGapToWaterLines of metric will can't be calculated
@@ -196,7 +196,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 			delete(throttleUpGapToWaterLines, m)
 		} else {
 			// Attention: different with throttleDown and evict
-			throttleUpGapToWaterLines[m] = float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed
+			throttleUpGapToWaterLines[m] = executeExcessPercent * (float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed)
 		}
 	}
 	return

@@ -37,4 +37,6 @@ type ExecuteContext struct {
 	EvictGapToWaterLines GapToWaterLines
 
 	getStateFunc func() map[string][]common.TimeSeries
+
+	executeExcessPercent float64
 }
