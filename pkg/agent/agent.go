@@ -65,6 +65,7 @@ func NewAgent(ctx context.Context,
 	ifaces []string,
 	healthCheck *metrics.HealthCheck,
 	CollectInterval time.Duration,
+	executeExcess string,
 ) (*Agent, error) {
 	var managers []manager.Manager
 	var noticeCh = make(chan executor.AvoidanceExecutor)
@@ -88,7 +89,7 @@ func NewAgent(ctx context.Context,
 	managers = appendManagerIfNotNil(managers, stateCollector)
 	analyzerManager := analyzer.NewAnormalyAnalyzer(kubeClient, nodeName, podInformer, nodeInformer, nepInformer, actionInformer, stateCollector.AnalyzerChann, noticeCh)
 	managers = appendManagerIfNotNil(managers, analyzerManager)
-	avoidanceManager := executor.NewActionExecutor(kubeClient, nodeName, podInformer, nodeInformer, noticeCh, runtimeEndpoint, stateCollector.GetStateFunc())
+	avoidanceManager := executor.NewActionExecutor(kubeClient, nodeName, podInformer, nodeInformer, noticeCh, runtimeEndpoint, stateCollector.GetStateFunc(), executeExcess)
 	managers = appendManagerIfNotNil(managers, avoidanceManager)
 
 	if nodeResource := utilfeature.DefaultFeatureGate.Enabled(features.CraneNodeResource); nodeResource {

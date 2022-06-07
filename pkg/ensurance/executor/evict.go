@@ -69,7 +69,7 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 			errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e)
+		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e, ctx.executeExcessPercent)
 
 		if ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
 			highestPrioriyMetric := e.EvictWaterLine.GetHighestPriorityEvictAbleMetric()

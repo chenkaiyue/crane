@@ -83,7 +83,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 			errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
+		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleDownGapToWaterLines.HasUsageMissedMetric() {
 			highestPrioriyMetric := t.ThrottleDownWaterLine.GetHighestPriorityThrottleAbleMetric()
@@ -161,7 +161,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 			errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{})
+		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleUpGapToWaterLines.HasUsageMissedMetric() {
 			highestPrioriyMetric := t.ThrottleUpWaterLine.GetHighestPriorityThrottleAbleMetric()

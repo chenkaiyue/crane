@@ -100,7 +100,7 @@ func Run(ctx context.Context, opts *options.Options) error {
 	tspInformer := craneInformerFactory.Prediction().V1alpha1().TimeSeriesPredictions()
 
 	newAgent, err := agent.NewAgent(ctx, hostname, opts.RuntimeEndpoint, opts.CgroupDriver, kubeClient, craneClient, podInformer, nodeInformer,
-		nepInformer, actionInformer, tspInformer, opts.NodeResourceReserved, opts.Ifaces, healthCheck, opts.CollectInterval)
+		nepInformer, actionInformer, tspInformer, opts.NodeResourceReserved, opts.Ifaces, healthCheck, opts.CollectInterval, opts.ExecuteExcess)
 
 	if err != nil {
 		return err
