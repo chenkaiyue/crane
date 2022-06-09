@@ -32,14 +32,14 @@ type ActionExecutor struct {
 	runtimeClient pb.RuntimeServiceClient
 	runtimeConn   *grpc.ClientConn
 
-	getStateFunc func() map[string][]common.TimeSeries
+	stateMap map[string][]common.TimeSeries
 
 	executeExcessPercent float64
 }
 
 // NewActionExecutor create enforcer manager
 func NewActionExecutor(client clientset.Interface, nodeName string, podInformer coreinformers.PodInformer, nodeInformer coreinformers.NodeInformer,
-	noticeCh <-chan AvoidanceExecutor, runtimeEndpoint string, getStateFunc func() map[string][]common.TimeSeries, executeExcess string) *ActionExecutor {
+	noticeCh <-chan AvoidanceExecutor, runtimeEndpoint string, stateMap map[string][]common.TimeSeries, executeExcess string) *ActionExecutor {
 
 	runtimeClient, runtimeConn, err := cruntime.GetRuntimeClient(runtimeEndpoint)
 	if err != nil {
@@ -63,7 +63,7 @@ func NewActionExecutor(client clientset.Interface, nodeName string, podInformer 
 		nodeSynced:           nodeInformer.Informer().HasSynced,
 		runtimeClient:        runtimeClient,
 		runtimeConn:          runtimeConn,
-		getStateFunc:         getStateFunc,
+		stateMap:             stateMap,
 		executeExcessPercent: executeExcessPercent,
 	}
 }
@@ -117,7 +117,7 @@ func (a *ActionExecutor) execute(ae AvoidanceExecutor, _ <-chan struct{}) error 
 		NodeLister:           a.nodeLister,
 		RuntimeClient:        a.runtimeClient,
 		RuntimeConn:          a.runtimeConn,
-		getStateFunc:         a.getStateFunc,
+		stateMap:             a.stateMap,
 		executeExcessPercent: a.executeExcessPercent,
 	}
 

@@ -36,7 +36,7 @@ type ExecuteContext struct {
 	// key is the metric name, value is (actual used)-(the lowest waterline for NodeQOSEnsurancePolicies which use evict action)
 	EvictGapToWaterLines GapToWaterLines
 
-	getStateFunc func() map[string][]common.TimeSeries
+	stateMap map[string][]common.TimeSeries
 
 	executeExcessPercent float64
 }

@@ -72,7 +72,7 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 			errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e, ctx.executeExcessPercent)
+		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.stateMap, ThrottleExecutor{}, *e, ctx.executeExcessPercent)
 
 		if ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
 			klog.V(6).Infof("There is a metric usage missed")

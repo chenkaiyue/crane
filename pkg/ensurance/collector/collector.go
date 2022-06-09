@@ -36,7 +36,7 @@ type StateCollector struct {
 	AnalyzerChann     chan map[string][]common.TimeSeries
 	NodeResourceChann chan map[string][]common.TimeSeries
 	PodResourceChann  chan map[string][]common.TimeSeries
-	state             map[string][]common.TimeSeries
+	State             map[string][]common.TimeSeries
 	rw                sync.RWMutex
 }
 
@@ -144,7 +144,7 @@ func (s *StateCollector) Collect(waterLine bool) {
 		s.AnalyzerChann <- data
 	}
 
-	s.state = data
+	s.State = data
 
 	if nodeResource := utilfeature.DefaultFeatureGate.Enabled(features.CraneNodeResource); nodeResource {
 		s.NodeResourceChann <- data
@@ -255,8 +255,6 @@ func CheckMetricNameExist(name string) bool {
 func (s *StateCollector) GetStateFunc() func() map[string][]common.TimeSeries {
 	return func() map[string][]common.TimeSeries {
 		s.Collect(true)
-		s.rw.RLock()
-		defer s.rw.RUnlock()
-		return s.state
+		return s.State
 	}
 }

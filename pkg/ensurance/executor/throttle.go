@@ -86,7 +86,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 			errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
+		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.stateMap, *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleDownGapToWaterLines.HasUsageMissedMetric() {
 			klog.V(6).Info("There is a metric usage missed")
@@ -178,7 +178,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 			errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
-		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
+		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.stateMap, *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleUpGapToWaterLines.HasUsageMissedMetric() {
 			klog.V(6).Info("There is a metric usage missed")
