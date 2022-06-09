@@ -14,7 +14,7 @@ spec:
       avoidanceThreshold: 2
       restoreThreshold: 2
       actionName: "throttle"
-      strategy: "None"
+      strategy: "Preview"
       metricRule:
         name: "cpu_total_usage"
         value: 6000
