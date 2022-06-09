@@ -50,7 +50,7 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 
 	var errPodKeys, errKeys []string
 	// TODO: totalReleasedResource used for prom metrics
-	var totalReleased ReleaseResource
+	totalReleased := ReleaseResource{}
 
 	/* The step to evict:
 	1. If EvictWaterLine has metrics that can't be quantified, select a evictable metric which has the highest action priority, use its EvictFunc to evict all selected pods, then return
@@ -90,6 +90,11 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 					MetricMap[m].SortFunc(e.EvictPods)
 				} else {
 					execsort.GeneralSorter(e.EvictPods)
+				}
+
+				klog.V(6).Info("After sort, the sequence to evict is ")
+				for _, pc := range e.EvictPods {
+					klog.V(6).Info(pc.PodKey.String())
 				}
 
 				for !ctx.EvictGapToWaterLines.TargetGapsRemoved(m) {

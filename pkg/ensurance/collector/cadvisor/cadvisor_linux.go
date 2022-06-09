@@ -154,7 +154,7 @@ func (c *CadvisorCollector) Collect() (map[string][]common.TimeSeries, error) {
 				addSampleToStateMap(types.MetricNameContainerCpuQuota, composeSample(containerLabels, float64(containerInfoV1.Spec.Cpu.Quota), now), stateMap)
 				addSampleToStateMap(types.MetricNameContainerCpuPeriod, composeSample(containerLabels, float64(containerInfoV1.Spec.Cpu.Period), now), stateMap)
 
-				klog.V(10).Infof("Pod: %s, containerName: %s, key %s, scheduler run queue time %.2f", klog.KObj(pod), containerName, key, schedRunqueueTime)
+				klog.V(6).Infof("Pod: %s, containerName: %s, key %s, scheduler run queue time %.2f, container_cpu_total_usage %.2f", klog.KObj(pod), containerName, key, schedRunqueueTime, cpuUsageSample)
 			}
 			containerStates[key] = ContainerState{stat: v, timestamp: now}
 		}

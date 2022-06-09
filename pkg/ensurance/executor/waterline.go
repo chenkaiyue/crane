@@ -160,7 +160,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 				delete(eviceGapToWaterLines, m)
 			} else {
 				klog.V(6).Infof("BuildEvictWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(evictWaterLine.PopSmallest().Value()))
-				eviceGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(evictWaterLine.PopSmallest().Value()))
+				eviceGapToWaterLines[m] = (1 + executeExcessPercent) * (maxUsed - float64(evictWaterLine.PopSmallest().Value()))
 			}
 		}
 	}
@@ -194,7 +194,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 				delete(throttleDownGapToWaterLines, m)
 			} else {
 				klog.V(6).Infof("BuildThrottleDownWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(throttleDownWaterLine.PopSmallest().Value()))
-				throttleDownGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(throttleDownWaterLine.PopSmallest().Value()))
+				throttleDownGapToWaterLines[m] = (1 + executeExcessPercent) * (maxUsed - float64(throttleDownWaterLine.PopSmallest().Value()))
 			}
 
 			// If metric not exist in ThrottleUpWaterLine, throttleUpGapToWaterLines of metric will can't be calculated
@@ -203,7 +203,7 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 			} else {
 				klog.V(6).Infof("BuildThrottleUpWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(throttleUpWaterLine.PopSmallest().Value()))
 				// Attention: different with throttleDown and evict, use waterline - used
-				throttleUpGapToWaterLines[m] = executeExcessPercent * (float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed)
+				throttleUpGapToWaterLines[m] = (1 + executeExcessPercent) * (float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed)
 			}
 		}
 	}

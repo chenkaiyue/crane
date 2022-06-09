@@ -208,7 +208,7 @@ func (s *AnormalyAnalyzer) trigger(series []common.TimeSeries, object ensurancea
 	for _, ts := range series {
 		triggered = s.evaluator.EvalWithMetric(object.MetricRule.Name, float64(object.MetricRule.Value.Value()), ts.Samples[0].Value)
 
-		klog.V(6).Infof("Anormaly detection result %v, Name: %s, Value: %.2f, %s/%s", triggered,
+		klog.V(4).Infof("Anormaly detection result %v, Name: %s, Value: %.2f, %s/%s", triggered,
 			object.MetricRule.Name,
 			ts.Samples[0].Value,
 			common.GetValueByName(ts.Labels, common.LabelNamePodNamespace),
@@ -238,7 +238,7 @@ func (s *AnormalyAnalyzer) analyze(key string, object ensuranceapi.ObjectiveEnsu
 	//step2: check if triggered for NodeQOSEnsurance
 	threshold := s.trigger(series, object)
 
-	klog.V(4).Infof("for NodeQOS %s, metrics reach the threshold: %v", key, threshold)
+	klog.V(4).Infof("For NodeQOS %s, metrics reach the threshold: %v", key, threshold)
 
 	//step3: check is triggered action or restored, set the detection
 	s.computeActionContext(threshold, key, object, &ac)

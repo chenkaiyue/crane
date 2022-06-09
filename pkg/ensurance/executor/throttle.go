@@ -65,7 +65,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 
 	var errPodKeys, errKeys []string
 	// TODO: totalReleasedResource used for prom metrics
-	var totalReleased ReleaseResource
+	totalReleased := ReleaseResource{}
 
 	/* The step to throttle:
 	1. If ThrottleDownWaterLine has metrics that can't be quantified, select a throttleable metric which has the highest action priority, use its throttlefunc to throttle all ThrottleDownPods, then return
@@ -105,14 +105,21 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 					execsort.GeneralSorter(t.ThrottleDownPods)
 				}
 
+				klog.V(6).Info("After sort, the sequence to throttle is ")
+				for _, pc := range t.ThrottleDownPods {
+					klog.V(6).Info(pc.PodKey.String())
+				}
+
 				for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {
 					klog.V(6).Infof("For metric %s, there is still gap to waterlines: %f", m, ctx.ThrottoleDownGapToWaterLines[m])
-					for index := range t.ThrottleDownPods {
+					//for index := range t.ThrottleDownPods {
+					for index := range []int{1, 2} {
 						errKeys, released = MetricMap[m].ThrottleFunc(ctx, index, t.ThrottleDownPods, &totalReleased)
 						klog.V(6).Infof("ThrottleDown pods %s, released %f resource", t.ThrottleDownPods[index].PodKey, released[m])
 						errPodKeys = append(errPodKeys, errKeys...)
 						ctx.ThrottoleDownGapToWaterLines[m] -= released[m]
 					}
+					break
 				}
 			}
 		}
@@ -150,7 +157,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 
 	var errPodKeys, errKeys []string
 	// TODO: totalReleasedResource used for prom metrics
-	var totalReleased ReleaseResource
+	totalReleased := ReleaseResource{}
 
 	/* The step to restore:
 	1. If ThrottleUpWaterLine has metrics that can't be quantified, select a throttleable metric which has the highest action priority, use its RestoreFunc to restore all ThrottleUpPods, then return
@@ -190,6 +197,11 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 					execsort.GeneralSorter(t.ThrottleUpPods)
 				}
 				t.ThrottleUpPods = Reverse(t.ThrottleUpPods)
+
+				klog.V(6).Info("After sort, the sequence to throttle is ")
+				for _, pc := range t.ThrottleUpPods {
+					klog.V(6).Info(pc.PodKey.String())
+				}
 
 				for !ctx.ThrottoleUpGapToWaterLines.TargetGapsRemoved(m) {
 					klog.V(6).Infof("For metric %s, there is still gap to waterlines: %f", m, ctx.ThrottoleUpGapToWaterLines[m])

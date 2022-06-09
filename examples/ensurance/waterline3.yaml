@@ -14,7 +14,7 @@ spec:
       avoidanceThreshold: 2
       restoreThreshold: 2
       actionName: "eviction"
-      strategy: "Preview"
+      strategy: "None"
       metricRule:
         name: "cpu_total_usage"
         value: 6000

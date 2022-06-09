@@ -26,7 +26,8 @@ type metric struct {
 
 	EvictAble       bool
 	EvictQuantified bool
-	EvictFunc       func(wg *sync.WaitGroup, ctx *ExecuteContext, index int, totalReleasedResource *ReleaseResource, EvictPods EvictPods) (errPodKeys []string, released ReleaseResource)
+	// If use goroutine to evcit, make sure to calculate release resources outside the goroutine
+	EvictFunc func(wg *sync.WaitGroup, ctx *ExecuteContext, index int, totalReleasedResource *ReleaseResource, EvictPods EvictPods) (errPodKeys []string, released ReleaseResource)
 }
 
 var MetricMap = make(map[WaterLineMetric]metric)

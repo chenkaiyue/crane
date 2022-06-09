@@ -137,8 +137,10 @@ func BuildPodBasicInfo(pod *v1.Pod, stateMap map[string][]common.TimeSeries, act
 	podContext.ExtCpuBeUsed, podContext.ExtCpuLimit, podContext.ExtCpuRequest = utils.ExtResourceAllocated(pod, v1.ResourceCPU)
 	podContext.StartTime = pod.Status.StartTime
 
-	podContext.CPUThrottle.MinCPURatio = uint64(action.Spec.Throttle.CPUThrottle.MinCPURatio)
-	podContext.CPUThrottle.StepCPURatio = uint64(action.Spec.Throttle.CPUThrottle.StepCPURatio)
+	if action.Spec.Throttle != nil {
+		podContext.CPUThrottle.MinCPURatio = uint64(action.Spec.Throttle.CPUThrottle.MinCPURatio)
+		podContext.CPUThrottle.StepCPURatio = uint64(action.Spec.Throttle.CPUThrottle.StepCPURatio)
+	}
 
 	podContext.PodType = podType
 
