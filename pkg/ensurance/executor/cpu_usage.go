@@ -49,7 +49,7 @@ func throttleOnePodCpu(ctx *ExecuteContext, index int, ThrottleDownPods Throttle
 			continue
 		}
 
-		klog.V(4).Infof("ThrottleExecutor1 avoid container %s/%s", klog.KObj(pod), v.ContainerName)
+		klog.V(4).Infof("ThrottleExecutor avoid container %s/%s", klog.KObj(pod), v.ContainerName)
 
 		containerCPUQuota, err := podinfo.GetUsageById(ThrottleDownPods[index].ContainerCPUQuotas, v.ContainerId)
 		if err != nil {
@@ -102,6 +102,8 @@ func throttleOnePodCpu(ctx *ExecuteContext, index int, ThrottleDownPods Throttle
 			}
 		}
 		released = ConstructCpuUsageRelease(ThrottleDownPods[index], containerCPUQuotaNew, v.Value)
+		klog.V(6).Infof("For pod %s, container %s, release %f cpu usage", ThrottleDownPods[index].PodKey, container.Name, released)
+
 		totalReleasedResource.Add(released)
 	}
 	return
@@ -185,6 +187,8 @@ func restoreOnePodCpu(ctx *ExecuteContext, index int, ThrottleUpPods ThrottlePod
 			}
 		}
 		released = ConstructCpuUsageRelease(ThrottleUpPods[index], containerCPUQuotaNew, v.Value)
+		klog.V(6).Infof("For pod %s, container %s, release %f cpu usage", ThrottleUpPods[index].PodKey, container.Name, released)
+
 		totalReleasedResource.Add(released)
 	}
 
@@ -216,6 +220,7 @@ func evictOnePodCpu(wg *sync.WaitGroup, ctx *ExecuteContext, index int, totalRel
 
 		// Calculate release resources
 		released = ConstructCpuUsageRelease(evictPod, 0.0, 0.0)
+
 		totalReleasedResource.Add(released)
 	}(EvictPods[index])
 	return

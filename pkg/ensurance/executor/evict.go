@@ -62,25 +62,30 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 
 	metricsEvictQuantified, MetricsNotEvcitQuantified := e.EvictWaterLine.DivideMetricsByEvictQuantified()
 
-	// There is a metric that can't be ThrottleQuantified, so throttle all selected pods
+	// There is a metric that can't be EvictQuantified, so evict all selected pods
 	if len(MetricsNotEvcitQuantified) != 0 {
+		klog.V(6).Info("There is a metric that can't be EvcitQuantified")
+
 		highestPrioriyMetric := e.EvictWaterLine.GetHighestPriorityEvictAbleMetric()
 		if highestPrioriyMetric != "" {
+			klog.V(6).Infof("The highestPrioriyMetric is %s", highestPrioriyMetric)
 			errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
 		_, _, ctx.EvictGapToWaterLines = buildGapToWaterLine(ctx.getStateFunc(), ThrottleExecutor{}, *e, ctx.executeExcessPercent)
 
 		if ctx.EvictGapToWaterLines.HasUsageMissedMetric() {
+			klog.V(6).Infof("There is a metric usage missed")
 			highestPrioriyMetric := e.EvictWaterLine.GetHighestPriorityEvictAbleMetric()
 			if highestPrioriyMetric != "" {
 				errPodKeys = e.evictPods(ctx, &totalReleased, highestPrioriyMetric)
 			}
 		} else {
-			// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
+			// The metrics in EvictGapToWaterLines are can be EvictQuantified and has current usage, then evict precisely
 			var released ReleaseResource
 			wg := sync.WaitGroup{}
 			for _, m := range metricsEvictQuantified {
+				klog.V(6).Infof("Evict precisely on metric %s", m)
 				if MetricMap[m].SortAble {
 					MetricMap[m].SortFunc(e.EvictPods)
 				} else {
@@ -88,13 +93,18 @@ func (e *EvictExecutor) Avoid(ctx *ExecuteContext) error {
 				}
 
 				for !ctx.EvictGapToWaterLines.TargetGapsRemoved(m) {
+					klog.V(6).Infof("For metric %s, there is still gap to waterlines: %f", m, ctx.EvictGapToWaterLines[m])
 					if podinfo.HasNoExecutedPod(e.EvictPods) {
 						index := podinfo.GetFirstNoExecutedPod(e.EvictPods)
 						errKeys, released = MetricMap[m].EvictFunc(&wg, ctx, index, &totalReleased, e.EvictPods)
 						errPodKeys = append(errPodKeys, errKeys...)
+						klog.V(6).Infof("Evict pods %s, released %f resource", e.EvictPods[index].PodKey, released[m])
 
 						e.EvictPods[index].HasBeenActioned = true
 						ctx.EvictGapToWaterLines[m] -= released[m]
+					} else {
+						klog.V(6).Info("There is no pod that can be evicted")
+						break
 					}
 				}
 			}
