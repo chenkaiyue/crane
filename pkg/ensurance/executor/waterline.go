@@ -2,6 +2,7 @@ package executor
 
 import (
 	"math"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
@@ -132,71 +133,78 @@ func buildGapToWaterLine(stateMap map[string][]common.TimeSeries,
 
 	throttleDownGapToWaterLines, throttleUpGapToWaterLines, eviceGapToWaterLines = make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64), make(map[WaterLineMetric]float64)
 
-	// Traverse EvictAbleMetric but not evictExecutor.EvictWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
-	// must come from EvictAbleMetrics
-	for _, m := range GetEvictAbleMetricName() {
-		// Get the series for each metric
-		series, ok := stateMap[string(m)]
-		if !ok {
-			klog.Warningf("Metric %s not found from collector stateMap", string(m))
-			// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
-			eviceGapToWaterLines[m] = MissedCurrentUsage
-			continue
-		}
+	if !reflect.DeepEqual(evictExecutor, EvictExecutor{}) {
+		// Traverse EvictAbleMetric but not evictExecutor.EvictWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
+		// must come from EvictAbleMetrics
+		for _, m := range GetEvictAbleMetricName() {
+			// Get the series for each metric
+			series, ok := stateMap[string(m)]
+			if !ok {
+				klog.Warningf("BuildEvictWaterLineGap: Evict Metric %s not found from collector stateMap", string(m))
+				// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
+				eviceGapToWaterLines[m] = MissedCurrentUsage
+				continue
+			}
 
-		// Find the biggest used value
-		var maxUsed float64
-		if series[0].Samples[0].Value > maxUsed {
-			maxUsed = series[0].Samples[0].Value
-		}
+			// Find the biggest used value
+			var maxUsed float64
+			if series[0].Samples[0].Value > maxUsed {
+				maxUsed = series[0].Samples[0].Value
+			}
 
-		// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
-		evictWaterLine, evictExist := evictExecutor.EvictWaterLine[m]
+			// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
+			evictWaterLine, evictExist := evictExecutor.EvictWaterLine[m]
 
-		// If metric not exist in EvictWaterLine, eviceGapToWaterLines of metric will can't be calculated
-		if !evictExist {
-			delete(eviceGapToWaterLines, m)
-		} else {
-			eviceGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(evictWaterLine.PopSmallest().Value()))
+			// If metric not exist in EvictWaterLine, eviceGapToWaterLines of metric will can't be calculated
+			if !evictExist {
+				delete(eviceGapToWaterLines, m)
+			} else {
+				klog.V(6).Infof("BuildEvictWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(evictWaterLine.PopSmallest().Value()))
+				eviceGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(evictWaterLine.PopSmallest().Value()))
+			}
 		}
 	}
 
-	// Traverse ThrottleAbleMetricName but not throttleExecutor.ThrottleDownWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
-	// must come from ThrottleAbleMetrics
-	for _, m := range GetThrottleAbleMetricName() {
-		// Get the series for each metric
-		series, ok := stateMap[string(m)]
-		if !ok {
-			klog.Warningf("Metric %s not found from collector stateMap", string(m))
-			// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
-			throttleDownGapToWaterLines[m] = MissedCurrentUsage
-			throttleUpGapToWaterLines[m] = MissedCurrentUsage
-			continue
-		}
+	if !reflect.DeepEqual(throttleExecutor, ThrottleExecutor{}) {
+		// Traverse ThrottleAbleMetricName but not throttleExecutor.ThrottleDownWaterLine can make it easier when users use the wrong metric name in NEP, cause this limit metrics
+		// must come from ThrottleAbleMetrics
+		for _, m := range GetThrottleAbleMetricName() {
+			// Get the series for each metric
+			series, ok := stateMap[string(m)]
+			if !ok {
+				klog.Warningf("BuildThrottleWaterLineGap: Metric %s not found from collector stateMap", string(m))
+				// Can't get current usage, so can not do actions precisely, just evict every evictedPod;
+				throttleDownGapToWaterLines[m] = MissedCurrentUsage
+				throttleUpGapToWaterLines[m] = MissedCurrentUsage
+				continue
+			}
 
-		// Find the biggest used value
-		var maxUsed float64
-		if series[0].Samples[0].Value > maxUsed {
-			maxUsed = series[0].Samples[0].Value
-		}
+			// Find the biggest used value
+			var maxUsed float64
+			if series[0].Samples[0].Value > maxUsed {
+				maxUsed = series[0].Samples[0].Value
+			}
 
-		// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
-		throttleDownWaterLine, throttleDownExist := throttleExecutor.ThrottleDownWaterLine[m]
-		throttleUpWaterLine, throttleUpExist := throttleExecutor.ThrottleUpWaterLine[m]
+			// Get the waterLine for each metric in WaterLineMetricsCanBeQuantified
+			throttleDownWaterLine, throttleDownExist := throttleExecutor.ThrottleDownWaterLine[m]
+			throttleUpWaterLine, throttleUpExist := throttleExecutor.ThrottleUpWaterLine[m]
 
-		// If a metric does not exist in ThrottleDownWaterLine, throttleDownGapToWaterLines of this metric will can't be calculated
-		if !throttleDownExist {
-			delete(throttleDownGapToWaterLines, m)
-		} else {
-			throttleDownGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(throttleDownWaterLine.PopSmallest().Value()))
-		}
+			// If a metric does not exist in ThrottleDownWaterLine, throttleDownGapToWaterLines of this metric will can't be calculated
+			if !throttleDownExist {
+				delete(throttleDownGapToWaterLines, m)
+			} else {
+				klog.V(6).Infof("BuildThrottleDownWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(throttleDownWaterLine.PopSmallest().Value()))
+				throttleDownGapToWaterLines[m] = executeExcessPercent * (maxUsed - float64(throttleDownWaterLine.PopSmallest().Value()))
+			}
 
-		// If metric not exist in ThrottleUpWaterLine, throttleUpGapToWaterLines of metric will can't be calculated
-		if !throttleUpExist {
-			delete(throttleUpGapToWaterLines, m)
-		} else {
-			// Attention: different with throttleDown and evict
-			throttleUpGapToWaterLines[m] = executeExcessPercent * (float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed)
+			// If metric not exist in ThrottleUpWaterLine, throttleUpGapToWaterLines of metric will can't be calculated
+			if !throttleUpExist {
+				delete(throttleUpGapToWaterLines, m)
+			} else {
+				klog.V(6).Infof("BuildThrottleUpWaterLineGap: For metrics %s, maxUsed is %f, waterline is %f", m, maxUsed, float64(throttleUpWaterLine.PopSmallest().Value()))
+				// Attention: different with throttleDown and evict, use waterline - used
+				throttleUpGapToWaterLines[m] = executeExcessPercent * (float64(throttleUpWaterLine.PopSmallest().Value()) - maxUsed)
+			}
 		}
 	}
 	return
@@ -226,8 +234,9 @@ func (g GapToWaterLines) TargetGapsRemoved(metric WaterLineMetric) bool {
 
 // Whether there is a metric that can't get usage in GapToWaterLines
 func (g GapToWaterLines) HasUsageMissedMetric() bool {
-	for _, v := range g {
+	for m, v := range g {
 		if v == MissedCurrentUsage {
+			klog.V(6).Infof("Metric %s usage missed", m)
 			return true
 		}
 	}

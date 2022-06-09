@@ -543,6 +543,10 @@ func combineThrottleWaterLine(e *executor.ThrottleExecutor, ac ecache.ActionCont
 		}
 	}
 
+	for waterLineMetric, waterlines := range e.ThrottleDownWaterLine {
+		klog.V(6).Infof("ThrottleDownWaterLine info: metric: %s, value: %#v", waterLineMetric, waterlines)
+	}
+
 	if enableSchedule && ac.Restored {
 		for _, ensurance := range ac.Nep.Spec.ObjectiveEnsurances {
 			if ensurance.Name == ac.ObjectiveEnsuranceName {
@@ -555,6 +559,10 @@ func combineThrottleWaterLine(e *executor.ThrottleExecutor, ac ecache.ActionCont
 				heap.Push(e.ThrottleUpWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)], ensurance.MetricRule.Value)
 			}
 		}
+	}
+
+	for waterLineMetric, waterlines := range e.ThrottleUpWaterLine {
+		klog.V(6).Infof("ThrottleUpWaterLine info: metric: %s, value: %#v", waterLineMetric, waterlines)
 	}
 }
 
@@ -570,6 +578,10 @@ func combineEvictWaterLine(e *executor.EvictExecutor, ac ecache.ActionContext) {
 				}
 				heap.Push(e.EvictWaterLine[executor.WaterLineMetric(ensurance.MetricRule.Name)], ensurance.MetricRule.Value)
 			}
+		}
+
+		for waterLineMetric, waterlines := range e.EvictWaterLine {
+			klog.V(6).Infof("EvictWaterLine info: metric: %s, value: %#v", waterLineMetric, waterlines)
 		}
 	}
 }

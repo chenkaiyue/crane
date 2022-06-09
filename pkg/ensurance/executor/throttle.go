@@ -78,14 +78,18 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 
 	// There is a metric that can't be ThrottleQuantified, so throttle all selected pods
 	if len(MetricsNotThrottleQuantified) != 0 {
+		klog.V(6).Info("ThrottleDown: There is a metric that can't be ThrottleQuantified")
+
 		highestPrioriyMetric := t.ThrottleDownWaterLine.GetHighestPriorityThrottleAbleMetric()
 		if highestPrioriyMetric != "" {
+			klog.V(6).Infof("The highestPrioriyMetric is %s", highestPrioriyMetric)
 			errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
 		ctx.ThrottoleDownGapToWaterLines, _, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleDownGapToWaterLines.HasUsageMissedMetric() {
+			klog.V(6).Info("There is a metric usage missed")
 			highestPrioriyMetric := t.ThrottleDownWaterLine.GetHighestPriorityThrottleAbleMetric()
 			if highestPrioriyMetric != "" {
 				errPodKeys = t.throttlePods(ctx, &totalReleased, highestPrioriyMetric)
@@ -94,6 +98,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 			// The metrics in ThrottoleDownGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
 			var released ReleaseResource
 			for _, m := range metricsThrottleQuantified {
+				klog.V(6).Infof("ThrottleDown precisely on metric %s", m)
 				if MetricMap[m].SortAble {
 					MetricMap[m].SortFunc(t.ThrottleDownPods)
 				} else {
@@ -101,8 +106,10 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 				}
 
 				for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {
+					klog.V(6).Infof("For metric %s, there is still gap to waterlines: %f", m, ctx.ThrottoleDownGapToWaterLines[m])
 					for index := range t.ThrottleDownPods {
 						errKeys, released = MetricMap[m].ThrottleFunc(ctx, index, t.ThrottleDownPods, &totalReleased)
+						klog.V(6).Infof("ThrottleDown pods %s, released %f resource", t.ThrottleDownPods[index].PodKey, released[m])
 						errPodKeys = append(errPodKeys, errKeys...)
 						ctx.ThrottoleDownGapToWaterLines[m] -= released[m]
 					}
@@ -156,14 +163,18 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 
 	// There is a metric that can't be ThrottleQuantified, so restore all selected pods
 	if len(MetricsNotThrottleQuantified) != 0 {
+		klog.V(6).Info("ThrottleUp: There is a metric that can't be ThrottleQuantified")
+
 		highestPrioriyMetric := t.ThrottleUpWaterLine.GetHighestPriorityThrottleAbleMetric()
 		if highestPrioriyMetric != "" {
+			klog.V(6).Infof("The highestPrioriyMetric is %s", highestPrioriyMetric)
 			errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
 		}
 	} else {
 		_, ctx.ThrottoleUpGapToWaterLines, _ = buildGapToWaterLine(ctx.getStateFunc(), *t, EvictExecutor{}, ctx.executeExcessPercent)
 
 		if ctx.ThrottoleUpGapToWaterLines.HasUsageMissedMetric() {
+			klog.V(6).Info("There is a metric usage missed")
 			highestPrioriyMetric := t.ThrottleUpWaterLine.GetHighestPriorityThrottleAbleMetric()
 			if highestPrioriyMetric != "" {
 				errPodKeys = t.restorePods(ctx, &totalReleased, highestPrioriyMetric)
@@ -172,6 +183,7 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 			// The metrics in ThrottoleUpGapToWaterLines are all in WaterLineMetricsCanBeQuantified and has current usage, then throttle precisely
 			var released ReleaseResource
 			for _, m := range metricsThrottleQuantified {
+				klog.V(6).Infof("ThrottleUp precisely on metric %s", m)
 				if MetricMap[m].SortAble {
 					MetricMap[m].SortFunc(t.ThrottleUpPods)
 				} else {
@@ -180,8 +192,10 @@ func (t *ThrottleExecutor) Restore(ctx *ExecuteContext) error {
 				t.ThrottleUpPods = Reverse(t.ThrottleUpPods)
 
 				for !ctx.ThrottoleUpGapToWaterLines.TargetGapsRemoved(m) {
+					klog.V(6).Infof("For metric %s, there is still gap to waterlines: %f", m, ctx.ThrottoleUpGapToWaterLines[m])
 					for index := range t.ThrottleUpPods {
 						errKeys, released = MetricMap[m].RestoreFunc(ctx, index, t.ThrottleUpPods, &totalReleased)
+						klog.V(6).Infof("ThrottleDown pods %s, released %f resource", t.ThrottleUpPods[index].PodKey, released[m])
 						errPodKeys = append(errPodKeys, errKeys...)
 						ctx.ThrottoleUpGapToWaterLines[m] -= released[m]
 					}
