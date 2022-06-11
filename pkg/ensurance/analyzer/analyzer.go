@@ -180,7 +180,7 @@ func (s *AnormalyAnalyzer) Analyze(state map[string][]common.TimeSeries) {
 		}
 	}
 
-	klog.V(6).Infof("Analyze actionContexts: %v", actionContexts)
+	klog.V(6).Infof("Analyze actionContexts: %#v", actionContexts)
 
 	//step 3 : merge
 	avoidanceAction := s.merge(state, avoidanceMaps, actionContexts)
@@ -314,6 +314,16 @@ func (s *AnormalyAnalyzer) merge(stateMap map[string][]common.TimeSeries, avoida
 			combineEvictDuplicate(&ae.EvictExecutor, evictPods)
 		}
 	}
+	ae.StateMap = stateMap
+
+	//klog.V(6).Info("ThrottleExecutor is:")
+	//for _, v := range ae.ThrottleExecutor.ThrottleDownPods {
+	//	klog.V(6).Infof("pod %s, container name %s, container id %s, cpu usage %d", v.PodKey.String(),
+	//		v.ContainerCPUUsages[0].ContainerId, v.ContainerCPUUsages[0].ContainerName, v.ContainerCPUUsages[0].Value)
+	//}
+
+	klog.V(6).Infof("ThrottleExecutor is %#v, EvictExecutor is %#v", ae.ThrottleExecutor, ae.EvictExecutor)
+	utils.StateMapInfo(ae.StateMap)
 
 	return ae
 }
@@ -367,6 +377,7 @@ func (s *AnormalyAnalyzer) getTimeSeriesFromMap(state []common.TimeSeries, selec
 
 func (s *AnormalyAnalyzer) notify(as executor.AvoidanceExecutor) {
 	//step1: notice by channel
+	klog.V(6).Infof("")
 	s.actionCh <- as
 	return
 }
@@ -495,8 +506,8 @@ func combineThrottleDuplicate(e *executor.ThrottleExecutor, throttlePods, thrott
 			}
 		}
 	}
-	for _, t := range throttleUpPods {
 
+	for _, t := range throttleUpPods {
 		if i := e.ThrottleUpPods.Find(t.PodKey); i == -1 {
 			e.ThrottleUpPods = append(e.ThrottleUpPods, t)
 		} else {

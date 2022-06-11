@@ -106,6 +106,17 @@ type PodContext struct {
 	HasBeenActioned bool
 }
 
+//func PodContextsInfo(pcs []PodContext) {
+//	for _, pc := range pcs {
+//		klog.V(6).Infof("pod %s, PodCPUUsage %d, ", pc.PodKey.String(), pc.PodCPUUsage)
+//	}
+//}
+//
+//func (pc PodContext) String() string {
+//
+//	return fmt.Sprintf("pod %s, %f", pc.PodKey, s.Value)
+//}
+
 func HasNoExecutedPod(pods []PodContext) bool {
 	for _, p := range pods {
 		if p.HasBeenActioned == false {

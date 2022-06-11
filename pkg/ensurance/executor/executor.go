@@ -117,9 +117,11 @@ func (a *ActionExecutor) execute(ae AvoidanceExecutor, _ <-chan struct{}) error 
 		NodeLister:           a.nodeLister,
 		RuntimeClient:        a.runtimeClient,
 		RuntimeConn:          a.runtimeConn,
-		stateMap:             a.stateMap,
+		stateMap:             ae.StateMap,
 		executeExcessPercent: a.executeExcessPercent,
 	}
+
+	utils.StateMapInfo(ctx.stateMap)
 
 	//step1 do enforcer actions
 	if err := avoid(ctx, ae); err != nil {

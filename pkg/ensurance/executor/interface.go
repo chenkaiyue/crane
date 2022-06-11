@@ -18,6 +18,7 @@ type AvoidanceExecutor struct {
 	ScheduleExecutor ScheduleExecutor
 	ThrottleExecutor ThrottleExecutor
 	EvictExecutor    EvictExecutor
+	StateMap         map[string][]common.TimeSeries
 }
 
 type ExecuteContext struct {

@@ -45,6 +45,7 @@ func NewStateCollector(nodeName string, nepLister ensuranceListers.NodeQOSEnsura
 	analyzerChann := make(chan map[string][]common.TimeSeries)
 	nodeResourceChann := make(chan map[string][]common.TimeSeries)
 	podResourceChann := make(chan map[string][]common.TimeSeries)
+	State := make(map[string][]common.TimeSeries)
 	return &StateCollector{
 		nodeName:          nodeName,
 		nepLister:         nepLister,
@@ -59,6 +60,7 @@ func NewStateCollector(nodeName string, nepLister ensuranceListers.NodeQOSEnsura
 		collectors:        &sync.Map{},
 		cadvisorManager:   manager,
 		exclusiveCPUSet:   exclusiveCPUSet,
+		State:             State,
 	}
 }
 
@@ -113,7 +115,7 @@ func (s *StateCollector) Collect(waterLine bool) {
 	wg := sync.WaitGroup{}
 	start := time.Now()
 
-	var data = make(map[string][]common.TimeSeries)
+	//var data = make(map[string][]common.TimeSeries)
 
 	s.collectors.Range(func(key, value interface{}) bool {
 		c := value.(Collector)
@@ -132,26 +134,23 @@ func (s *StateCollector) Collect(waterLine bool) {
 				}
 				s.rw.Unlock()
 			}
-		}(c, data)
+		}(c, s.State)
 
 		return true
 	})
 
 	wg.Wait()
 
-	// If Collect is not called by waterline related logic but StateCollector.Run, AnalyzerChann should not get update, which will trigger recursive analyzes and executes
-	if !waterLine {
-		s.AnalyzerChann <- data
-	}
+	s.AnalyzerChann <- s.State
 
-	s.State = data
+	s.State = s.State
 
 	if nodeResource := utilfeature.DefaultFeatureGate.Enabled(features.CraneNodeResource); nodeResource {
-		s.NodeResourceChann <- data
+		s.NodeResourceChann <- s.State
 	}
 
 	if podResource := utilfeature.DefaultFeatureGate.Enabled(features.CranePodResource); podResource {
-		s.PodResourceChann <- data
+		s.PodResourceChann <- s.State
 	}
 }
 

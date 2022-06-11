@@ -54,7 +54,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 	metrics.UpdateLastTimeWithSubComponent(string(known.ModuleActionExecutor), string(metrics.SubComponentThrottle), metrics.StepAvoid, start)
 	defer metrics.UpdateDurationFromStartWithSubComponent(string(known.ModuleActionExecutor), string(metrics.SubComponentThrottle), metrics.StepAvoid, start)
 
-	klog.V(6).Info("ThrottleExecutor avoid, %v", *t)
+	klog.V(6).Info("ThrottleExecutor avoid, %#v", *t)
 
 	if len(t.ThrottleDownPods) == 0 {
 		metrics.UpdateExecutorStatus(metrics.SubComponentThrottle, metrics.StepAvoid, 0)
@@ -107,7 +107,7 @@ func (t *ThrottleExecutor) Avoid(ctx *ExecuteContext) error {
 
 				klog.V(6).Info("After sort, the sequence to throttle is ")
 				for _, pc := range t.ThrottleDownPods {
-					klog.V(6).Info(pc.PodKey.String())
+					klog.V(6).Infof(pc.PodKey.String(), pc.ContainerCPUUsages)
 				}
 
 				for !ctx.ThrottoleDownGapToWaterLines.TargetGapsRemoved(m) {

@@ -4,7 +4,9 @@
 package cadvisor
 
 import (
+	"math"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -121,6 +123,18 @@ func (c *CadvisorCollector) Collect() (map[string][]common.TimeSeries, error) {
 		for key, v := range containers {
 			containerId := utils.GetContainerIdFromKey(key)
 			containerName := utils.GetContainerNameFromPod(pod, containerId)
+			klog.V(6).Infof("Key is %s, containerId is %s, containerName is %s", key, containerId, containerName)
+
+			if reflect.DeepEqual(cadvisorapiv2.ContainerInfo{}, v) {
+				klog.Warning("ContainerInfo is nil")
+			} else {
+				if len(v.Stats) == 0 {
+					klog.Warning("ContainerInfo.Stats is nil")
+				} else {
+					klog.V(6).Infof("Container cpu usage total is %d, timestamp is %d", v.Stats[0].Cpu.Usage.Total, v.Stats[0].Timestamp.UnixNano())
+				}
+			}
+
 			// Filter the sandbox container
 			if (containerId != "") && (containerName == "") {
 				continue
@@ -139,10 +153,11 @@ func (c *CadvisorCollector) Collect() (map[string][]common.TimeSeries, error) {
 			}
 
 			if state, ok := c.latestContainersStates[key]; ok {
+				klog.V(6).Info("LatestContainersStates exist")
 				var containerLabels = GetContainerLabels(pod, containerId, containerName, hasExtRes)
 
 				cpuUsageSample, schedRunqueueTime := caculateCPUUsage(&v, &state)
-				if cpuUsageSample == 0 && schedRunqueueTime == 0 {
+				if cpuUsageSample == 0 && schedRunqueueTime == 0 || math.IsNaN(cpuUsageSample) {
 					continue
 				}
 				if hasExtRes {
@@ -154,7 +169,7 @@ func (c *CadvisorCollector) Collect() (map[string][]common.TimeSeries, error) {
 				addSampleToStateMap(types.MetricNameContainerCpuQuota, composeSample(containerLabels, float64(containerInfoV1.Spec.Cpu.Quota), now), stateMap)
 				addSampleToStateMap(types.MetricNameContainerCpuPeriod, composeSample(containerLabels, float64(containerInfoV1.Spec.Cpu.Period), now), stateMap)
 
-				klog.V(6).Infof("Pod: %s, containerName: %s, key %s, scheduler run queue time %.2f, container_cpu_total_usage %.2f", klog.KObj(pod), containerName, key, schedRunqueueTime, cpuUsageSample)
+				klog.V(6).Infof("Pod: %s, containerName: %s, key %s, scheduler run queue time %.2f, container_cpu_total_usage %#v", klog.KObj(pod), containerName, key, schedRunqueueTime, cpuUsageSample)
 			}
 			containerStates[key] = ContainerState{stat: v, timestamp: now}
 		}
@@ -194,8 +209,10 @@ func caculateCPUUsage(info *cadvisorapiv2.ContainerInfo, state *ContainerState) 
 		return 0, 0
 	}
 	cpuUsageIncrease := info.Stats[0].Cpu.Usage.Total - state.stat.Stats[0].Cpu.Usage.Total
+	klog.V(6).Infof("info CpuUsageTotal: %d, state CpuUsageTotal: %d", info.Stats[0].Cpu.Usage.Total, state.stat.Stats[0].Cpu.Usage.Total)
 	schedRunqueueTimeIncrease := info.Stats[0].Cpu.Schedstat.RunqueueTime - state.stat.Stats[0].Cpu.Schedstat.RunqueueTime
 	timeIncrease := info.Stats[0].Timestamp.UnixNano() - state.stat.Stats[0].Timestamp.UnixNano()
+	klog.V(6).Infof("info Timestamp: %d, state Timestamp: %d", info.Stats[0].Timestamp.UnixNano(), state.stat.Stats[0].Timestamp.UnixNano())
 	cpuUsageSample := float64(cpuUsageIncrease) / float64(timeIncrease)
 	schedRunqueueTime := float64(schedRunqueueTimeIncrease) * 1000 * 1000 / float64(timeIncrease)
 	return cpuUsageSample, schedRunqueueTime
