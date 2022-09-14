@@ -156,6 +156,9 @@ func (o *NodeResourceManager) UpdateNodeResource() {
 	if !equality.Semantic.DeepEqual(&node.Status, &nodeCopy.Status) {
 		// Update Node status extend-resource info
 		// TODO fix: strategic merge patch kubernetes
+		if val, ok := node.Labels["cloud.tencent.com/provider"]; !ok || val != "tencentcloud" {
+			return
+		}
 		if _, err := o.client.CoreV1().Nodes().UpdateStatus(context.TODO(), nodeCopy, metav1.UpdateOptions{}); err != nil {
 			klog.Errorf("Failed to update node %s extended resource, %v", nodeCopy.Name, err)
 			return
