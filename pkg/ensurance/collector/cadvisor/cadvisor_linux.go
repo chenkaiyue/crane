@@ -159,11 +159,11 @@ func (c *CadvisorCollector) Collect() (map[string][]common.TimeSeries, error) {
 			}
 
 			if hasExtMemRes {
-				extResMemUse += float64(v.Stats[0].Memory.Usage)
+				extResMemUse += float64(v.Stats[0].Memory.WorkingSet)
 			}
 
 			var containerLabels = GetContainerLabels(pod, containerId, containerName, hasExtCpuRes)
-			addSampleToStateMap(types.MetricNameContainerMemTotalUsage, composeSample(containerLabels, float64(v.Stats[0].Memory.Usage), now), stateMap)
+			addSampleToStateMap(types.MetricNameContainerMemTotalUsage, composeSample(containerLabels, float64(v.Stats[0].Memory.WorkingSet), now), stateMap)
 
 			if state, ok := c.latestContainersStates[key]; ok {
 				klog.V(6).Infof("For key %s, LatestContainersStates exist", key)
