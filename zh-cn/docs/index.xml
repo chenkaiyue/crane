@@ -2517,366 +2517,15 @@ F[Result workload replicas];
 &lt;ul>
 &lt;li>等一段时间再看。预测算法 &lt;code>DSP&lt;/code> 需要一定时间的数据才能进行预测。希望了解算法细节的可以查看算法的文档。&lt;/li>
 &lt;li>EffectiveHorizontalPodAutoscaler 提供一种保护机制，当预测失效时依然能通过实际的 CPU 使用率工作。&lt;/li>
-&lt;/ul></description></item><item><title>Docs: TimeSeriesPrediction</title><link>/zh-cn/docs/tutorials/using-time-series-prediction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/using-time-series-prediction/</guid><description>
-&lt;p>Knowing the future makes things easier for us.&lt;/p>
-&lt;hr>
-&lt;p>许多业务在时间序列上天然存在周期性的，尤其是对于那些直接或间接为“人”服务的业务。这种周期性是由人们日常活动的规律性决定的。例如，人们习惯于中午和晚上点外卖；早晚总有交通高峰；即使是搜索等模式不那么明显的服务，夜间的请求量也远低于白天时间。对于这类业务相关的应用来说，从过去几天的历史数据中推断出次日的指标，或者从上周一的数据中推断出下周一的访问量是很自然的想法。通过预测未来 24 小时内的指标或流量模式，我们可以更好地管理我们的应用程序实例，稳定我们的系统，同时降低成本。&lt;/p>
-&lt;p>&lt;code>TimeSeriesPrediction&lt;/code> 被用于预测 Kubernetes 对象指标。它基于 &lt;code>PredictionCore&lt;/code> 进行预测。&lt;/p>
-&lt;h2 id="features">Features&lt;/h2>
-&lt;p>&lt;code>TimeSeriesPrediction&lt;/code> 的示例 yaml 如下所示：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">prediction.crane.io/v1alpha1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">TimeSeriesPrediction&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">node-resource-percentile&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">targetRef&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Node&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">192.168.56.166&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionWindowSeconds&lt;/span>: &lt;span style="color:#ae81ff">600&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionMetrics&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-cpu&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10000.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-mem&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">memory&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1000000.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
-&lt;li>&lt;code>spec.targetRef&lt;/code> 定义了对 Kubernetes 对象的引用，包括 Node 或其他工作负载，例如 Deployment。&lt;/li>
-&lt;li>&lt;code>spec.predictionMetrics&lt;/code> 定义了关于 &lt;code>spec.targetRef&lt;/code> 的指标。&lt;/li>
-&lt;li>&lt;code>spec.predictionWindowSeconds&lt;/code> 是预测时间序列持续时间。&lt;code>TimeSeriesPredictionController&lt;/code> 将轮换 &lt;code>spec.Status&lt;/code> 中的预测数据，以供消费者使用预测的时间序列数据。&lt;/li>
-&lt;/ul>
-&lt;h2 id="prediction-metrics">Prediction Metrics&lt;/h2>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">prediction.crane.io/v1alpha1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">TimeSeriesPrediction&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">node-resource-percentile&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionMetrics&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-cpu&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10000.0&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="metric-type">Metric Type&lt;/h3>
-&lt;p>现在我们只支持 &lt;code>prometheus&lt;/code> 作为数据源。我们定义&lt;code>MetricType&lt;/code>与数据源进行结合。但是现在可能有些数据源不支持 &lt;code>MetricType&lt;/code>。&lt;/p>
-&lt;p>指标查询有以下三种类型：&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>ResourceQuery&lt;/code>是 kubernetes 内置的资源指标，例如 cpu 或 memory。Crane目前只支持 CPU 和内存。&lt;/li>
-&lt;li>&lt;code>RawQuery&lt;/code>是通过 DSL 的查询，比如 prometheus 查询语句。现在已支持 Prometheus 。&lt;/li>
-&lt;li>&lt;code>ExpressionQuery&lt;/code>是一个表达式查询。&lt;/li>
-&lt;/ul>
-&lt;h3 id="algorithm">Algorithm&lt;/h3>
-&lt;p>&lt;code>Algorithm&lt;/code>定义算法类型和参数来预测指标。现在有两种算法：&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>dsp&lt;/code>是一种预测时间序列的算法，它基于 FFT（快速傅里叶变换），擅长预测一些具有季节性和周期的时间序列。&lt;/li>
-&lt;li>&lt;code>percentile&lt;/code>是一种估计时间序列，并找到代表过去时间序列的推荐值的算法，它基于指数衰减权重直方图统计。它是用来估计一个时间序列的，它不擅长预测一个时间序列，虽然&lt;code>percentile&lt;/code>可以输出一个时间序列的预测数据，但是都是一样的值。&lt;strong>所以如果你想预测一个时间序列，dsp 是一个更好的选择。&lt;/strong>&lt;/li>
-&lt;/ul></description></item><item><title>Docs: 如何开发 Recommender</title><link>/zh-cn/docs/tutorials/recommendation/how-to-develop-recommender/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/recommendation/how-to-develop-recommender/</guid><description>
-&lt;p>Recommendation Framework 提供了一套可扩展的 Recommender 框架并支持了内置的 Recommender，用户可以实现一个自定义的 Recommender，或者修改一个已有的 Recommender。&lt;/p>
-&lt;h2 id="recommender-interface">Recommender Interface&lt;/h2>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Recommender&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span>() &lt;span style="color:#66d9ef">string&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Filter&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PrePrepare&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Prepare&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PostPrepare&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PreRecommend&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Recommend&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PostRecommend&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Observe&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Filter
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Filter interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Filter&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// The Filter will filter resource can`t be recommended via target recommender.
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">Filter&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Prepare
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PrePrepare interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PrePrepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">CheckDataProviders&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Prepare interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Prepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">CollectData&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PostPrepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">PostProcessing&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PreRecommend interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PreRecommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">PreRecommend&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Recommend
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Recommend interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Recommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Recommend&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PostRecommend interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PostRecommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Policy&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Observe
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Observe interface
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Observe&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Observe&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Recommender 接口定义了一次推荐需要实现的四个阶段和八个扩展点。这些扩展点会在推荐过程中按顺序被调用。这些扩展点中的的一些可以改变调度决策，而另一些仅用来提供信息。&lt;/p>
-&lt;h2 id="架构">架构&lt;/h2>
-&lt;p>&lt;img src="/images/recommendation-framework.png" alt="">&lt;/p>
-&lt;h2 id="阶段">阶段&lt;/h2>
-&lt;p>整个推荐过程分成了四个阶段：Filter，Prepare，Recommend，Observe。阶段的输入是需要分析的 Kubernetes 资源，输出是推荐的优化建议。 下面开始介绍每个阶段的输入、输出和能力。&lt;/p>
-&lt;p>&lt;code>RecommendationContext&lt;/code> 保存了一次推荐过程中的上下文，包括推荐目标，RecommendationConfiguration 等，用户可以按需增加更多的内容。&lt;/p>
-&lt;h3 id="filter">Filter&lt;/h3>
-&lt;p>Filter 阶段用于预处理推荐数据。通常，在预处理时需判断推荐目标是否和 Recommender 匹配，比如，Resource Recommender 只支持处理 Workload（Deployment，StatefulSet）。除此之外，还可以判断推荐目标状态是否适合推荐，比如是否删除中，是否刚创建等。当返回 error 会终止此次推荐。BaseRecommender 实现了基本的预处理功能，用户可以调用它继承相关功能。&lt;/p>
-&lt;h3 id="prepare">Prepare&lt;/h3>
-&lt;p>Prepare 阶段用于数据准备，请求外部监控系统并将时序数据保存在上下文中。PrePrepare 扩展点用于检测监控系统的链接情况。Prepare 扩展点用于查询时序数据。PostPrepare 扩展点用于对时序数据的数据处理，比如：应用冷启动的异常数据，部分数据的缺失，数据聚合，异常数据清理等。&lt;/p>
-&lt;h3 id="recommend">Recommend&lt;/h3>
-&lt;p>Recommend 阶段用于基于时序数据和资源配置进行优化建议。优化建议的类型取决于推荐的类型。比如，如果是资源推荐，那么输出就是 kubernetes workload 的资源配置。Recommend 扩展点用于采用 Crane 的算法模块对数据进行分析计算，PostRecommend 阶段对分析结果进行最后处理。用户可以自定义 Recommend 阶段实现自定义的推荐结果。&lt;/p>
-&lt;h3 id="observe">Observe&lt;/h3>
-&lt;p>Observe 阶段用于推荐结果的可观测。比如，在资源推荐时，将优化建议的信息通过 Metric 保存到监控系统，再通过 Dashboard 观测优化建议带来的收益。&lt;/p></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/qos-accurately-perform-avoidance-actions.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-accurately-perform-avoidance-actions.zh/</guid><description>
-&lt;h3 id="精确执行回避动作">精确执行回避动作&lt;/h3>
-&lt;p>通过如下两点进行，避免了对于低优pod的过度操作的同时能够更快地降低指标到指定水位线的差距，保障高优业务不受影响&lt;/p>
-&lt;ol>
-&lt;li>排序pod&lt;/li>
-&lt;/ol>
-&lt;p>crane实现了一些通用的排序方法（之后会更多地完善）：&lt;/p>
-&lt;p>classAndPriority： 比较两个pod的QOSClass和class value，优先比较QOSClass，再比较class value；priority高的排在后面优先级更高&lt;/p>
-&lt;p>runningTime：比较两个pod的运行时间，运行时间长的排在后面优先级更高&lt;/p>
-&lt;p>如果仅需使用这两个排序策略，使用默认的排序方法即可：会首先比较pod的优先级，之后比较pod对应指标的用量，之后比较pod的运行时长，有一个维度可以比较出结果即为pod的排序结果&lt;/p>
-&lt;p>以cpu usage指标的排序为例，还扩展了一些与自身指标相关的排序策略， 如cpu usage 使用量的排序，会依次比较两个pod的优先级，如果优先级相同的情况下，再比较cpu用量，如果cpu用量也相同的情况下继续比较扩展cpu资源用量, 最后比较pod的运行时长，当某一个指标存在差异时即可返回比较结果：&lt;code>orderedBy(classAndPriority, cpuUsage, extCpuUsage, runningTime).Sort(pods)&lt;/code>&lt;/p>
-&lt;ol start="2">
-&lt;li>参考水位线和pod用量执行回避动作
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">//将所有触发水位线的metrics根据其Quantified属性区分为两部分
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">metricsQuantified&lt;/span>, &lt;span style="color:#a6e22e">MetricsNotQuantified&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownWaterLine&lt;/span>.&lt;span style="color:#a6e22e">DivideMetricsByQuantified&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 如果存在不可Quantified的metric，获取具有最高ActionPriority的一个throttleAble的metric对所选择的所有pod进行操作
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">if&lt;/span> len(&lt;span style="color:#a6e22e">MetricsNotThrottleQuantified&lt;/span>) &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">GetHighestPriorityThrottleAbleMetric&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">t&lt;/span>.&lt;span style="color:#a6e22e">throttlePods&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>, &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} &lt;span style="color:#66d9ef">else&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//获取节点和workload的最新用量，构造和水位线差距
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span> = &lt;span style="color:#a6e22e">buildGapToWaterLine&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>.&lt;span style="color:#a6e22e">getStateFunc&lt;/span>())
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//如果触发水位线中存在metric的实时用量无法获取，则获取具有最高ActionPriority的一个throttleAble的metric对所选择的所有pod进行压制操作
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>.&lt;span style="color:#a6e22e">HasUsageMissedMetric&lt;/span>() {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownWaterLine&lt;/span>.&lt;span style="color:#a6e22e">GetHighestPriorityThrottleAbleMetric&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">errPodKeys&lt;/span> = &lt;span style="color:#a6e22e">throttlePods&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>, &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } &lt;span style="color:#66d9ef">else&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">var&lt;/span> &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//遍历触发水位线的metric中可以量化的metric：如果metric具有排序方法则直接使用其SortFunc对pod进行排序，否则使用GeneralSorter排序；
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">//之后使用其对应的操作方法对pod执行操作，并计算释放出来的对应metric的资源量，直到对应metric到水位线的差距已不存在
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">m&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">metricsQuantified&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">SortAble&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">SortFunc&lt;/span>(&lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } &lt;span style="color:#66d9ef">else&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">GeneralSorter&lt;/span>(&lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> !&lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>.&lt;span style="color:#a6e22e">TargetGapsRemoved&lt;/span>(&lt;span style="color:#a6e22e">m&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">index&lt;/span>, &lt;span style="color:#a6e22e">_&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">released&lt;/span> = &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">ThrottleFunc&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span>, &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>[&lt;span style="color:#a6e22e">m&lt;/span>] &lt;span style="color:#f92672">-=&lt;/span> &lt;span style="color:#a6e22e">released&lt;/span>[&lt;span style="color:#a6e22e">m&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;/ol>
-&lt;p>关于扩展自定义指标和排序参考 &amp;ldquo;自定义指标干扰检测回避和自定义排序&amp;rdquo; 部分&lt;/p></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</guid><description>
-&lt;h2 id="自定义指标干扰检测回避和自定义排序">自定义指标干扰检测回避和自定义排序&lt;/h2>
-&lt;p>自定义指标干扰检测回避和自定义排序的使用同 精确执行回避动作 部分中介绍的流程，此处介绍如何自定义自己的指标参与干扰检测回避流程&lt;/p>
-&lt;p>为了更好的基于NodeQOSEnsurancePolicy配置的metric进行排序和精准控制，对metric引入属性的概念。&lt;/p>
-&lt;p>metric的属性包含如下几个，自定义的指标实现这些字段即可：&lt;/p>
-&lt;ol>
-&lt;li>Name 表明了metric的名称，需要同collector模块中收集到的指标名称一致&lt;/li>
-&lt;li>ActionPriority 表示指标的优先级，0为最低，10为最高&lt;/li>
-&lt;li>SortAble 表明该指标是否可以排序，如果为true，需实现对应的SortFunc&lt;/li>
-&lt;li>SortFunc 对应的排序方法，排序方法可以排列组合一些通用方法，再结合指标自身的排序，将在下文详细介绍&lt;/li>
-&lt;li>ThrottleAble 表明针对该指标，是否可以对pod进行压制，例如针对cpu使用量这个metric，就有相对应的压制手段，但是对于memory使用量这种指标，就只能进行pod的驱逐，无法进行有效的压制&lt;/li>
-&lt;li>ThrottleQuantified 表明压制（restore）一个pod后，能否准确计算出经过压制后释放出的对应metric的资源量，我们将可以准确量化的指标称为可Quantified，否则为不可Quantified；
-比如cpu用量，可以通过限制cgroup用量进行压制，同时可以通过当前运行值和压制后的值计算压制后释放的cpu使用量；而比如memory usage就不属于压制可量化metric，因为memory没有对应的throttle实现，也就无法准确衡量压制一个pod后释放出来的memory资源具体用量；&lt;/li>
-&lt;li>ThrottleFunc，执行Throttle动作的具体方法，如果不可Throttle，返回的released为空&lt;/li>
-&lt;li>RestoreFunc，被Throttle后，执行恢复动作的具体方法，如果不可Restore，返回的released为空&lt;/li>
-&lt;li>EvictAble，EvictQuantified，EvictFunc 对evict动作的相关定义，具体内容和Throttle动作类似&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">metric&lt;/span> &lt;span style="color:#66d9ef">struct&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span> &lt;span style="color:#a6e22e">WaterLineMetric&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ActionPriority&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">SortAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">SortFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">pods&lt;/span> []&lt;span style="color:#a6e22e">podinfo&lt;/span>.&lt;span style="color:#a6e22e">PodContext&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleQuantified&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span> &lt;span style="color:#a6e22e">ThrottlePods&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">RestoreFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">ThrottleUpPods&lt;/span> &lt;span style="color:#a6e22e">ThrottlePods&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictQuantified&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">wg&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">sync&lt;/span>.&lt;span style="color:#a6e22e">WaitGroup&lt;/span>, &lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>, &lt;span style="color:#a6e22e">EvictPods&lt;/span> &lt;span style="color:#a6e22e">EvictPods&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>用户可以自行定义自己的metric，在构造完成后，通过registerMetricMap()进行注册&lt;/p>
-&lt;p>针对需要自定义的指标，可以通过实现如下的方法，搭配通用的排序方法即可方便地实现pod的灵活自定义排序，以代表自定义metric指标，&lt;metric-sort-func>代表自定义的针对的排序策略&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">func &amp;lt;metric&amp;gt;Sorter(pods []podinfo.PodContext) {&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">orderedBy(classAndPriority, &amp;lt;metric-sort-func&amp;gt;, runningTime).Sort(pods)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中&lt;code>&amp;lt;metric-sort-func&amp;gt;&lt;/code>需要实现如下的排序方法
-&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/qos-dynamic-resource-oversold-and-limit.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-dynamic-resource-oversold-and-limit.zh/</guid><description>
-&lt;h2 id="预测算法增强的动态资源超卖">预测算法增强的动态资源超卖&lt;/h2>
-&lt;p>为了提高稳定性，通常用户在部署应用的时候会设置高于实际使用量的Request值，造成资源的浪费，为了提高节点的资源利用率，用户会搭配部署一些BestEffort的应用，利用闲置资源，实现超卖；
-但是这些应用由于缺乏资源limit和request的约束和相关信息，调度器依旧可能将这些pod调度到负载较高的节点上去，这与我们的初衷是不符的，所以最好能依据节点的空闲资源量进行调度。&lt;/p>
-&lt;p>crane通过如下两种方式收集了节点的空闲资源量，综合后作为节点的空闲资源量，增强了资源评估的准确性：&lt;/p>
-&lt;p>这里以cpu为例，同时也支持内存的空闲资源回收和计算。&lt;/p>
-&lt;ol>
-&lt;li>
-&lt;p>通过本地收集的cpu用量信息&lt;br>
-&lt;code>nodeCpuCannotBeReclaimed := nodeCpuUsageTotal + exclusiveCPUIdle - extResContainerCpuUsageTotal&lt;/code>&lt;/p>
-&lt;p>exclusiveCPUIdle是指被cpu manager policy为exclusive的pod占用的cpu的空闲量，虽然这部分资源是空闲的，但是因为独占的原因，是无法被复用的，因此加上被算作已使用量&lt;/p>
-&lt;p>extResContainerCpuUsageTotal是指被作为动态资源使用的cpu用量，需要减去以免被二次计算&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>创建节点cpu使用量的TSP，默认情况下自动创建，会根据历史预测节点CPU用量&lt;/p>
-&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">data&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">spec&lt;/span>: |&lt;span style="color:#e6db74">
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> predictionMetrics:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> - algorithm:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> algorithmType: dsp
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> dsp:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> estimators:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> fft:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> - highFrequencyThreshold: &amp;#34;0.05&amp;#34;
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> lowAmplitudeThreshold: &amp;#34;1.0&amp;#34;
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> marginFraction: &amp;#34;0.2&amp;#34;
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> maxNumOfSpectrumItems: 20
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> minNumOfSpectrumItems: 10
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> historyLength: 3d
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> sampleInterval: 60s
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> resourceIdentifier: cpu
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> type: ExpressionQuery
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> expressionQuery:
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> expression: &amp;#39;sum(count(node_cpu_seconds_total{mode=&amp;#34;idle&amp;#34;,instance=~&amp;#34;({{.metadata.name}})(:\\d+)?&amp;#34;}) by (mode, cpu)) - sum(irate(node_cpu_seconds_total{mode=&amp;#34;idle&amp;#34;,instance=~&amp;#34;({{.metadata.name}})(:\\d+)?&amp;#34;}[5m]))&amp;#39;
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> predictionWindowSeconds: 3600&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ConfigMap&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">noderesource-tsp-template&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>结合预测算法和当前实际用量推算节点的剩余可用资源，并将其作为拓展资源赋予节点，pod可标明使用该扩展资源作为离线作业将空闲资源利用起来，以提升节点的资源利用率；&lt;/p>
-&lt;p>使用方法：&lt;br>
-部署pod时limit和request使用&lt;code>gocrane.io/&amp;lt;$ResourceName&amp;gt;：&amp;lt;$value&amp;gt;&lt;/code>即可，如下&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">nginx&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">imagePullPolicy&lt;/span>: &lt;span style="color:#ae81ff">Always&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">extended-resource-demo-ctr&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2000Mi&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2000Mi&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="弹性资源限制功能">弹性资源限制功能&lt;/h2>
-&lt;p>原生的BestEffort应用缺乏资源用量的公平保证，Crane保证使用动态资源的BestEffort pod其cpu使用量被限制在其允许使用的合理范围内，agent保证使用扩展资源的pod实际用量也不会超过其声明限制，同时在cpu竞争时也能按照各自声明量公平竞争；同时使用弹性资源的pod也会受到水位线功能的管理。&lt;/p>
-&lt;p>使用方法：
-部署pod时limit和request使用&lt;code>gocrane.io/&amp;lt;$ResourceName&amp;gt;：&amp;lt;$value&amp;gt;&lt;/code>即可&lt;/p>
-&lt;h2 id="适配场景">适配场景&lt;/h2>
-&lt;p>为了提升节点的负载，可以将一些离线作业或者重要性较低的作业通过使用弹性资源的方式调度部署到集群中，这类作业会使用空闲的弹性资源，
-搭配QOS的水位线保障，在节点出现负载较高的时候，也会优先被驱逐和压制，在保证高优先级业务稳定的前提下提升节点利用率。
-可以参见qos-interference-detection-and-active-avoidance.zh.md中&amp;quot;与弹性资源搭配使用&amp;quot;部分的内容。&lt;/p></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/qos-enhanced-bypass-cpuset-management.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-enhanced-bypass-cpuset-management.zh/</guid><description>
-&lt;h2 id="增强的旁路cpuset管理能力">增强的旁路cpuset管理能力&lt;/h2>
-&lt;p>kubelet支持static的cpu manager策略，当guaranteed pod运行在节点上时，kebelet会为该pod分配指定的专属cpu，其他进程无法占用，这保证了guaranteed pod的cpu独占，但是也造成了cpu和节点的的利用率较低，造成了一定的浪费。
-crane agent为cpuset管理提供了新的策略，允许pod和其他pod共享cpu当其指定了cpu绑核时，可以在利用绑核更少的上下文切换和更高的缓存亲和性的优点的前提下，还能让其他workload部署共用，提升资源利用率。&lt;/p>
-&lt;ol>
-&lt;li>提供了3种pod cpuset类型：&lt;/li>
-&lt;/ol>
-&lt;ul>
-&lt;li>
-&lt;p>exclusive：绑核后其他container不能再使用该cpu，独占cpu&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>share：绑核后其他container可以使用该cpu&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>none：选择没有被exclusive pod的container占用的cpu，可以使用share类型的绑核&lt;/p>
-&lt;p>share类型的绑核策略可以在利用绑核更少的上下文切换和更高的缓存亲和性的优点的前提下，还能让其他workload部署共用，提升资源利用率&lt;/p>
-&lt;/li>
-&lt;/ul>
-&lt;ol start="2">
-&lt;li>
-&lt;p>放宽了kubelet中绑核的限制&lt;/p>
-&lt;p>原先需要所有container的CPU limit与CPU request相等 ，这里只需要任意container的CPU limit大于或等于1且等于CPU request即可为该container设置绑核&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>支持在pod运行过程中修改pod的 cpuset policy，会立即生效&lt;/p>
-&lt;p>pod的cpu manager policy从none转换到share，从exclusive转换到share，均无需重启&lt;/p>
-&lt;/li>
-&lt;/ol>
-&lt;p>使用方法：&lt;/p>
-&lt;ol>
-&lt;li>
-&lt;p>设置kubelet的cpuset manager为&amp;quot;none&amp;quot;&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>通过pod annotation设置cpu manager policy&lt;/p>
-&lt;p>&lt;code>qos.gocrane.io/cpu-manager: none/exclusive/share&lt;/code>&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Pod&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">annotations&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">qos.gocrane.io/cpu-manager&lt;/span>: &lt;span style="color:#ae81ff">none/exclusive/share&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;/ol></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/qos-interference-detection-and-active-avoidance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-interference-detection-and-active-avoidance.zh/</guid><description>
+&lt;/ul></description></item><item><title>Docs: QoS Ensurance</title><link>/zh-cn/docs/tutorials/using-qos-ensurance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/using-qos-ensurance.zh/</guid><description>
+&lt;h1 id="qos-ensurance">Qos Ensurance&lt;/h1>
+&lt;p>Qos Ensurance 保证了运行在 Kubernetes 上的 Pod 的稳定性。&lt;/p>
+&lt;p>具有干扰检测和主动回避能力，当较高优先级的 Pod 受到资源竞争的影响时，Disable Schedule、Throttle以及Evict 将应用于低优先级的 Pod，以保证节点整体的稳定，
+目前已经支持节点的cpu/mem负载绝对值/百分比作为水位线，具体可以参考qos-interference-detection-and-active-avoidance.zh.md
+在发生干扰进行驱逐或压制时，会进行精确计算，将负载降低到略低于水位线即停止操作，防止误伤和过渡操作，具体内容可以参照qos-accurately-perform-avoidance-actions.zh.md。&lt;/p>
+&lt;p>同时，crane支持自定义指标适配整个干扰检测框架，只需要完成排序定义等一些操作，即可复用包含精确操作在内的干扰检测和回避流程，具体内容可以参照qos-customized-metrics-interference-detection-avoidance-and-sorting.zh.md。&lt;/p>
+&lt;p>具有预测算法增强的弹性资源超卖能力，将集群内的空闲资源复用起来，同时结合crane的预测能力，更好地复用闲置资源，当前已经支持cpu和mem的空闲资源回收。同时具有弹性资源限制功能，限制使用弹性资源的workload最大和最小资源使用量，避免对高优业务的影响和饥饿问题。具体内容可以参照qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p>
+&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照qos-enhanced-bypass-cpuset-management.zh.md。&lt;/p></description></item><item><title>Docs: QoS：干扰检测和主动回避</title><link>/zh-cn/docs/tutorials/qos-interference-detection-and-active-avoidance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-interference-detection-and-active-avoidance.zh/</guid><description>
 &lt;h2 id="qos-ensurance-架构">Qos Ensurance 架构&lt;/h2>
 &lt;p>Qos ensurance 的架构如下图所示。它包含三个模块。&lt;/p>
 &lt;ol>
@@ -3095,12 +2744,363 @@ crane agent为cpuset管理提供了新的策略，允许pod和其他pod共享cpu
 &lt;h3 id="与弹性资源搭配使用">与弹性资源搭配使用&lt;/h3>
 &lt;p>为了避免主动回避操作对于高优先级业务的影响，比如误驱逐了重要业务，建议使用PodQOS关联使用了弹性资源的workload，这样在执行动作的时候只会影响这些使用了空闲资源的workload，
 保证了节点上的核心业务的稳定。&lt;/p>
-&lt;p>弹性资源的内容可以参见qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p></description></item><item><title>Docs:</title><link>/zh-cn/docs/tutorials/using-qos-ensurance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/using-qos-ensurance.zh/</guid><description>
-&lt;h1 id="qos-ensurance">Qos Ensurance&lt;/h1>
-&lt;p>Qos Ensurance 保证了运行在 Kubernetes 上的 Pod 的稳定性。&lt;/p>
-&lt;p>具有干扰检测和主动回避能力，当较高优先级的 Pod 受到资源竞争的影响时，Disable Schedule、Throttle以及Evict 将应用于低优先级的 Pod，以保证节点整体的稳定，
-目前已经支持节点的cpu/mem负载绝对值/百分比作为水位线，具体可以参考qos-interference-detection-and-active-avoidance.zh.md
-在发生干扰进行驱逐或压制时，会进行精确计算，将负载降低到略低于水位线即停止操作，防止误伤和过渡操作，具体内容可以参照qos-accurately-perform-avoidance-actions.zh.md。&lt;/p>
-&lt;p>同时，crane支持自定义指标适配整个干扰检测框架，只需要完成排序定义等一些操作，即可复用包含精确操作在内的干扰检测和回避流程，具体内容可以参照qos-customized-metrics-interference-detection-avoidance-and-sorting.zh.md。&lt;/p>
-&lt;p>具有预测算法增强的弹性资源超卖能力，将集群内的空闲资源复用起来，同时结合crane的预测能力，更好地复用闲置资源，当前已经支持cpu和mem的空闲资源回收。同时具有弹性资源限制功能，限制使用弹性资源的workload最大和最小资源使用量，避免对高优业务的影响和饥饿问题。具体内容可以参照qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p>
-&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照qos-enhanced-bypass-cpuset-management.zh.md。&lt;/p></description></item></channel></rss>
+&lt;p>弹性资源的内容可以参见qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p></description></item><item><title>Docs: QoS: 弹性资源超卖和限制</title><link>/zh-cn/docs/tutorials/qos-dynamic-resource-oversold-and-limit.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-dynamic-resource-oversold-and-limit.zh/</guid><description>
+&lt;h2 id="预测算法增强的动态资源超卖">预测算法增强的动态资源超卖&lt;/h2>
+&lt;p>为了提高稳定性，通常用户在部署应用的时候会设置高于实际使用量的Request值，造成资源的浪费，为了提高节点的资源利用率，用户会搭配部署一些BestEffort的应用，利用闲置资源，实现超卖；
+但是这些应用由于缺乏资源limit和request的约束和相关信息，调度器依旧可能将这些pod调度到负载较高的节点上去，这与我们的初衷是不符的，所以最好能依据节点的空闲资源量进行调度。&lt;/p>
+&lt;p>crane通过如下两种方式收集了节点的空闲资源量，综合后作为节点的空闲资源量，增强了资源评估的准确性：&lt;/p>
+&lt;p>这里以cpu为例，同时也支持内存的空闲资源回收和计算。&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>通过本地收集的cpu用量信息&lt;br>
+&lt;code>nodeCpuCannotBeReclaimed := nodeCpuUsageTotal + exclusiveCPUIdle - extResContainerCpuUsageTotal&lt;/code>&lt;/p>
+&lt;p>exclusiveCPUIdle是指被cpu manager policy为exclusive的pod占用的cpu的空闲量，虽然这部分资源是空闲的，但是因为独占的原因，是无法被复用的，因此加上被算作已使用量&lt;/p>
+&lt;p>extResContainerCpuUsageTotal是指被作为动态资源使用的cpu用量，需要减去以免被二次计算&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>创建节点cpu使用量的TSP，默认情况下自动创建，会根据历史预测节点CPU用量&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">data&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">spec&lt;/span>: |&lt;span style="color:#e6db74">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> predictionMetrics:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> - algorithm:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> algorithmType: dsp
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> dsp:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> estimators:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> fft:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> - highFrequencyThreshold: &amp;#34;0.05&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> lowAmplitudeThreshold: &amp;#34;1.0&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> marginFraction: &amp;#34;0.2&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> maxNumOfSpectrumItems: 20
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> minNumOfSpectrumItems: 10
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> historyLength: 3d
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> sampleInterval: 60s
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> resourceIdentifier: cpu
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> type: ExpressionQuery
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> expressionQuery:
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> expression: &amp;#39;sum(count(node_cpu_seconds_total{mode=&amp;#34;idle&amp;#34;,instance=~&amp;#34;({{.metadata.name}})(:\\d+)?&amp;#34;}) by (mode, cpu)) - sum(irate(node_cpu_seconds_total{mode=&amp;#34;idle&amp;#34;,instance=~&amp;#34;({{.metadata.name}})(:\\d+)?&amp;#34;}[5m]))&amp;#39;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> predictionWindowSeconds: 3600&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ConfigMap&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">noderesource-tsp-template&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>结合预测算法和当前实际用量推算节点的剩余可用资源，并将其作为拓展资源赋予节点，pod可标明使用该扩展资源作为离线作业将空闲资源利用起来，以提升节点的资源利用率；&lt;/p>
+&lt;p>使用方法：&lt;br>
+部署pod时limit和request使用&lt;code>gocrane.io/&amp;lt;$ResourceName&amp;gt;：&amp;lt;$value&amp;gt;&lt;/code>即可，如下&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">imagePullPolicy&lt;/span>: &lt;span style="color:#ae81ff">Always&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">extended-resource-demo-ctr&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2000Mi&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">gocrane.io/memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;2000Mi&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="弹性资源限制功能">弹性资源限制功能&lt;/h2>
+&lt;p>原生的BestEffort应用缺乏资源用量的公平保证，Crane保证使用动态资源的BestEffort pod其cpu使用量被限制在其允许使用的合理范围内，agent保证使用扩展资源的pod实际用量也不会超过其声明限制，同时在cpu竞争时也能按照各自声明量公平竞争；同时使用弹性资源的pod也会受到水位线功能的管理。&lt;/p>
+&lt;p>使用方法：
+部署pod时limit和request使用&lt;code>gocrane.io/&amp;lt;$ResourceName&amp;gt;：&amp;lt;$value&amp;gt;&lt;/code>即可&lt;/p>
+&lt;h2 id="适配场景">适配场景&lt;/h2>
+&lt;p>为了提升节点的负载，可以将一些离线作业或者重要性较低的作业通过使用弹性资源的方式调度部署到集群中，这类作业会使用空闲的弹性资源，
+搭配QOS的水位线保障，在节点出现负载较高的时候，也会优先被驱逐和压制，在保证高优先级业务稳定的前提下提升节点利用率。
+可以参见qos-interference-detection-and-active-avoidance.zh.md中&amp;quot;与弹性资源搭配使用&amp;quot;部分的内容。&lt;/p></description></item><item><title>Docs: QoS: 精确执行回避动作</title><link>/zh-cn/docs/tutorials/qos-accurately-perform-avoidance-actions.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-accurately-perform-avoidance-actions.zh/</guid><description>
+&lt;h2 id="精确执行回避动作">精确执行回避动作&lt;/h2>
+&lt;p>通过如下两点进行，避免了对于低优pod的过度操作的同时能够更快地降低指标到指定水位线的差距，保障高优业务不受影响&lt;/p>
+&lt;ol>
+&lt;li>排序pod&lt;/li>
+&lt;/ol>
+&lt;p>crane实现了一些通用的排序方法（之后会更多地完善）：&lt;/p>
+&lt;p>classAndPriority： 比较两个pod的QOSClass和class value，优先比较QOSClass，再比较class value；priority高的排在后面优先级更高&lt;/p>
+&lt;p>runningTime：比较两个pod的运行时间，运行时间长的排在后面优先级更高&lt;/p>
+&lt;p>如果仅需使用这两个排序策略，使用默认的排序方法即可：会首先比较pod的优先级，之后比较pod对应指标的用量，之后比较pod的运行时长，有一个维度可以比较出结果即为pod的排序结果&lt;/p>
+&lt;p>以cpu usage指标的排序为例，还扩展了一些与自身指标相关的排序策略， 如cpu usage 使用量的排序，会依次比较两个pod的优先级，如果优先级相同的情况下，再比较cpu用量，如果cpu用量也相同的情况下继续比较扩展cpu资源用量, 最后比较pod的运行时长，当某一个指标存在差异时即可返回比较结果：&lt;code>orderedBy(classAndPriority, cpuUsage, extCpuUsage, runningTime).Sort(pods)&lt;/code>&lt;/p>
+&lt;ol start="2">
+&lt;li>参考水位线和pod用量执行回避动作
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">//将所有触发水位线的metrics根据其Quantified属性区分为两部分
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">metricsQuantified&lt;/span>, &lt;span style="color:#a6e22e">MetricsNotQuantified&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownWaterLine&lt;/span>.&lt;span style="color:#a6e22e">DivideMetricsByQuantified&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 如果存在不可Quantified的metric，获取具有最高ActionPriority的一个throttleAble的metric对所选择的所有pod进行操作
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">if&lt;/span> len(&lt;span style="color:#a6e22e">MetricsNotThrottleQuantified&lt;/span>) &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">GetHighestPriorityThrottleAbleMetric&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">t&lt;/span>.&lt;span style="color:#a6e22e">throttlePods&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>, &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} &lt;span style="color:#66d9ef">else&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//获取节点和workload的最新用量，构造和水位线差距
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span> = &lt;span style="color:#a6e22e">buildGapToWaterLine&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>.&lt;span style="color:#a6e22e">getStateFunc&lt;/span>())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//如果触发水位线中存在metric的实时用量无法获取，则获取具有最高ActionPriority的一个throttleAble的metric对所选择的所有pod进行压制操作
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>.&lt;span style="color:#a6e22e">HasUsageMissedMetric&lt;/span>() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownWaterLine&lt;/span>.&lt;span style="color:#a6e22e">GetHighestPriorityThrottleAbleMetric&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">errPodKeys&lt;/span> = &lt;span style="color:#a6e22e">throttlePods&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>, &lt;span style="color:#a6e22e">highestPrioriyMetric&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } &lt;span style="color:#66d9ef">else&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">var&lt;/span> &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">//遍历触发水位线的metric中可以量化的metric：如果metric具有排序方法则直接使用其SortFunc对pod进行排序，否则使用GeneralSorter排序；
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#75715e">//之后使用其对应的操作方法对pod执行操作，并计算释放出来的对应metric的资源量，直到对应metric到水位线的差距已不存在
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">m&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">metricsQuantified&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">SortAble&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">SortFunc&lt;/span>(&lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } &lt;span style="color:#66d9ef">else&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">GeneralSorter&lt;/span>(&lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> !&lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>.&lt;span style="color:#a6e22e">TargetGapsRemoved&lt;/span>(&lt;span style="color:#a6e22e">m&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">index&lt;/span>, &lt;span style="color:#a6e22e">_&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">released&lt;/span> = &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">ThrottleFunc&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span>, &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span>, &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">totalReleased&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottoleDownGapToWaterLines&lt;/span>[&lt;span style="color:#a6e22e">m&lt;/span>] &lt;span style="color:#f92672">-=&lt;/span> &lt;span style="color:#a6e22e">released&lt;/span>[&lt;span style="color:#a6e22e">m&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;p>关于扩展自定义指标和排序参考 &amp;ldquo;自定义指标干扰检测回避和自定义排序&amp;rdquo; 部分&lt;/p></description></item><item><title>Docs: QoS: 定义自己的水位线指标</title><link>/zh-cn/docs/tutorials/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</guid><description>
+&lt;h2 id="自定义指标干扰检测回避和自定义排序">自定义指标干扰检测回避和自定义排序&lt;/h2>
+&lt;p>自定义指标干扰检测回避和自定义排序的使用同 精确执行回避动作 部分中介绍的流程，此处介绍如何自定义自己的指标参与干扰检测回避流程&lt;/p>
+&lt;p>为了更好的基于NodeQOSEnsurancePolicy配置的metric进行排序和精准控制，对metric引入属性的概念。&lt;/p>
+&lt;p>metric的属性包含如下几个，自定义的指标实现这些字段即可：&lt;/p>
+&lt;ol>
+&lt;li>Name 表明了metric的名称，需要同collector模块中收集到的指标名称一致&lt;/li>
+&lt;li>ActionPriority 表示指标的优先级，0为最低，10为最高&lt;/li>
+&lt;li>SortAble 表明该指标是否可以排序，如果为true，需实现对应的SortFunc&lt;/li>
+&lt;li>SortFunc 对应的排序方法，排序方法可以排列组合一些通用方法，再结合指标自身的排序，将在下文详细介绍&lt;/li>
+&lt;li>ThrottleAble 表明针对该指标，是否可以对pod进行压制，例如针对cpu使用量这个metric，就有相对应的压制手段，但是对于memory使用量这种指标，就只能进行pod的驱逐，无法进行有效的压制&lt;/li>
+&lt;li>ThrottleQuantified 表明压制（restore）一个pod后，能否准确计算出经过压制后释放出的对应metric的资源量，我们将可以准确量化的指标称为可Quantified，否则为不可Quantified；
+比如cpu用量，可以通过限制cgroup用量进行压制，同时可以通过当前运行值和压制后的值计算压制后释放的cpu使用量；而比如memory usage就不属于压制可量化metric，因为memory没有对应的throttle实现，也就无法准确衡量压制一个pod后释放出来的memory资源具体用量；&lt;/li>
+&lt;li>ThrottleFunc，执行Throttle动作的具体方法，如果不可Throttle，返回的released为空&lt;/li>
+&lt;li>RestoreFunc，被Throttle后，执行恢复动作的具体方法，如果不可Restore，返回的released为空&lt;/li>
+&lt;li>EvictAble，EvictQuantified，EvictFunc 对evict动作的相关定义，具体内容和Throttle动作类似&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">metric&lt;/span> &lt;span style="color:#66d9ef">struct&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span> &lt;span style="color:#a6e22e">WaterLineMetric&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ActionPriority&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">SortAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">SortFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">pods&lt;/span> []&lt;span style="color:#a6e22e">podinfo&lt;/span>.&lt;span style="color:#a6e22e">PodContext&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleQuantified&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">ThrottleFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">ThrottleDownPods&lt;/span> &lt;span style="color:#a6e22e">ThrottlePods&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">RestoreFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">ThrottleUpPods&lt;/span> &lt;span style="color:#a6e22e">ThrottlePods&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictAble&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictQuantified&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">EvictFunc&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">wg&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">sync&lt;/span>.&lt;span style="color:#a6e22e">WaitGroup&lt;/span>, &lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ExecuteContext&lt;/span>, &lt;span style="color:#a6e22e">index&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>, &lt;span style="color:#a6e22e">totalReleasedResource&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ReleaseResource&lt;/span>, &lt;span style="color:#a6e22e">EvictPods&lt;/span> &lt;span style="color:#a6e22e">EvictPods&lt;/span>) (&lt;span style="color:#a6e22e">errPodKeys&lt;/span> []&lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">released&lt;/span> &lt;span style="color:#a6e22e">ReleaseResource&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>用户可以自行定义自己的metric，在构造完成后，通过registerMetricMap()进行注册&lt;/p>
+&lt;p>针对需要自定义的指标，可以通过实现如下的方法，搭配通用的排序方法即可方便地实现pod的灵活自定义排序，以代表自定义metric指标，&lt;metric-sort-func>代表自定义的针对的排序策略&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">func &amp;lt;metric&amp;gt;Sorter(pods []podinfo.PodContext) {&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">orderedBy(classAndPriority, &amp;lt;metric-sort-func&amp;gt;, runningTime).Sort(pods)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中&lt;code>&amp;lt;metric-sort-func&amp;gt;&lt;/code>需要实现如下的排序方法
+&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs: QoS: 增强的旁路cpuset管理能力</title><link>/zh-cn/docs/tutorials/qos-enhanced-bypass-cpuset-management.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos-enhanced-bypass-cpuset-management.zh/</guid><description>
+&lt;h2 id="增强的旁路cpuset管理能力">增强的旁路cpuset管理能力&lt;/h2>
+&lt;p>kubelet支持static的cpu manager策略，当guaranteed pod运行在节点上时，kebelet会为该pod分配指定的专属cpu，其他进程无法占用，这保证了guaranteed pod的cpu独占，但是也造成了cpu和节点的的利用率较低，造成了一定的浪费。
+crane agent为cpuset管理提供了新的策略，允许pod和其他pod共享cpu当其指定了cpu绑核时，可以在利用绑核更少的上下文切换和更高的缓存亲和性的优点的前提下，还能让其他workload部署共用，提升资源利用率。&lt;/p>
+&lt;ol>
+&lt;li>提供了3种pod cpuset类型：&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>
+&lt;p>exclusive：绑核后其他container不能再使用该cpu，独占cpu&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>share：绑核后其他container可以使用该cpu&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>none：选择没有被exclusive pod的container占用的cpu，可以使用share类型的绑核&lt;/p>
+&lt;p>share类型的绑核策略可以在利用绑核更少的上下文切换和更高的缓存亲和性的优点的前提下，还能让其他workload部署共用，提升资源利用率&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;ol start="2">
+&lt;li>
+&lt;p>放宽了kubelet中绑核的限制&lt;/p>
+&lt;p>原先需要所有container的CPU limit与CPU request相等 ，这里只需要任意container的CPU limit大于或等于1且等于CPU request即可为该container设置绑核&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>支持在pod运行过程中修改pod的 cpuset policy，会立即生效&lt;/p>
+&lt;p>pod的cpu manager policy从none转换到share，从exclusive转换到share，均无需重启&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>使用方法：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>设置kubelet的cpuset manager为&amp;quot;none&amp;quot;&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>通过pod annotation设置cpu manager policy&lt;/p>
+&lt;p>&lt;code>qos.gocrane.io/cpu-manager: none/exclusive/share&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Pod&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">annotations&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">qos.gocrane.io/cpu-manager&lt;/span>: &lt;span style="color:#ae81ff">none/exclusive/share&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol></description></item><item><title>Docs: TimeSeriesPrediction</title><link>/zh-cn/docs/tutorials/using-time-series-prediction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/using-time-series-prediction/</guid><description>
+&lt;p>Knowing the future makes things easier for us.&lt;/p>
+&lt;hr>
+&lt;p>许多业务在时间序列上天然存在周期性的，尤其是对于那些直接或间接为“人”服务的业务。这种周期性是由人们日常活动的规律性决定的。例如，人们习惯于中午和晚上点外卖；早晚总有交通高峰；即使是搜索等模式不那么明显的服务，夜间的请求量也远低于白天时间。对于这类业务相关的应用来说，从过去几天的历史数据中推断出次日的指标，或者从上周一的数据中推断出下周一的访问量是很自然的想法。通过预测未来 24 小时内的指标或流量模式，我们可以更好地管理我们的应用程序实例，稳定我们的系统，同时降低成本。&lt;/p>
+&lt;p>&lt;code>TimeSeriesPrediction&lt;/code> 被用于预测 Kubernetes 对象指标。它基于 &lt;code>PredictionCore&lt;/code> 进行预测。&lt;/p>
+&lt;h2 id="features">Features&lt;/h2>
+&lt;p>&lt;code>TimeSeriesPrediction&lt;/code> 的示例 yaml 如下所示：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">prediction.crane.io/v1alpha1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">TimeSeriesPrediction&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">node-resource-percentile&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">targetRef&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Node&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">192.168.56.166&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionWindowSeconds&lt;/span>: &lt;span style="color:#ae81ff">600&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionMetrics&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-cpu&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10000.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-mem&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">memory&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1000000.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
+&lt;li>&lt;code>spec.targetRef&lt;/code> 定义了对 Kubernetes 对象的引用，包括 Node 或其他工作负载，例如 Deployment。&lt;/li>
+&lt;li>&lt;code>spec.predictionMetrics&lt;/code> 定义了关于 &lt;code>spec.targetRef&lt;/code> 的指标。&lt;/li>
+&lt;li>&lt;code>spec.predictionWindowSeconds&lt;/code> 是预测时间序列持续时间。&lt;code>TimeSeriesPredictionController&lt;/code> 将轮换 &lt;code>spec.Status&lt;/code> 中的预测数据，以供消费者使用预测的时间序列数据。&lt;/li>
+&lt;/ul>
+&lt;h2 id="prediction-metrics">Prediction Metrics&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">prediction.crane.io/v1alpha1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">TimeSeriesPrediction&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">node-resource-percentile&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">predictionMetrics&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">resourceIdentifier&lt;/span>: &lt;span style="color:#ae81ff">node-cpu&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuery&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceQuery&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithm&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">algorithmType&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;percentile&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">percentile&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">sampleInterval&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minSampleWeight&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">histogram&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxValue&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10000.0&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">epsilon&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1e-10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">halfLife&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;12h&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">firstBucketSize&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;40&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">bucketSizeGrowthRatio&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;1.5&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="metric-type">Metric Type&lt;/h3>
+&lt;p>现在我们只支持 &lt;code>prometheus&lt;/code> 作为数据源。我们定义&lt;code>MetricType&lt;/code>与数据源进行结合。但是现在可能有些数据源不支持 &lt;code>MetricType&lt;/code>。&lt;/p>
+&lt;p>指标查询有以下三种类型：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>ResourceQuery&lt;/code>是 kubernetes 内置的资源指标，例如 cpu 或 memory。Crane目前只支持 CPU 和内存。&lt;/li>
+&lt;li>&lt;code>RawQuery&lt;/code>是通过 DSL 的查询，比如 prometheus 查询语句。现在已支持 Prometheus 。&lt;/li>
+&lt;li>&lt;code>ExpressionQuery&lt;/code>是一个表达式查询。&lt;/li>
+&lt;/ul>
+&lt;h3 id="algorithm">Algorithm&lt;/h3>
+&lt;p>&lt;code>Algorithm&lt;/code>定义算法类型和参数来预测指标。现在有两种算法：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>dsp&lt;/code>是一种预测时间序列的算法，它基于 FFT（快速傅里叶变换），擅长预测一些具有季节性和周期的时间序列。&lt;/li>
+&lt;li>&lt;code>percentile&lt;/code>是一种估计时间序列，并找到代表过去时间序列的推荐值的算法，它基于指数衰减权重直方图统计。它是用来估计一个时间序列的，它不擅长预测一个时间序列，虽然&lt;code>percentile&lt;/code>可以输出一个时间序列的预测数据，但是都是一样的值。&lt;strong>所以如果你想预测一个时间序列，dsp 是一个更好的选择。&lt;/strong>&lt;/li>
+&lt;/ul></description></item><item><title>Docs: 如何开发 Recommender</title><link>/zh-cn/docs/tutorials/recommendation/how-to-develop-recommender/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/recommendation/how-to-develop-recommender/</guid><description>
+&lt;p>Recommendation Framework 提供了一套可扩展的 Recommender 框架并支持了内置的 Recommender，用户可以实现一个自定义的 Recommender，或者修改一个已有的 Recommender。&lt;/p>
+&lt;h2 id="recommender-interface">Recommender Interface&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Recommender&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span>() &lt;span style="color:#66d9ef">string&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Filter&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PrePrepare&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Prepare&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PostPrepare&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PreRecommend&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Recommend&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">PostRecommend&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">framework&lt;/span>.&lt;span style="color:#a6e22e">Observe&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Filter
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Filter interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Filter&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// The Filter will filter resource can`t be recommended via target recommender.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">Filter&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Prepare
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PrePrepare interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PrePrepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">CheckDataProviders&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Prepare interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Prepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">CollectData&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PostPrepare&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">PostProcessing&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PreRecommend interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PreRecommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">PreRecommend&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Recommend
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Recommend interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Recommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Recommend&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// PostRecommend interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">PostRecommend&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Policy&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Phase: Observe
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Observe interface
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">Observe&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Observe&lt;/span>(&lt;span style="color:#a6e22e">ctx&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">RecommendationContext&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Recommender 接口定义了一次推荐需要实现的四个阶段和八个扩展点。这些扩展点会在推荐过程中按顺序被调用。这些扩展点中的的一些可以改变调度决策，而另一些仅用来提供信息。&lt;/p>
+&lt;h2 id="架构">架构&lt;/h2>
+&lt;p>&lt;img src="/images/recommendation-framework.png" alt="">&lt;/p>
+&lt;h2 id="阶段">阶段&lt;/h2>
+&lt;p>整个推荐过程分成了四个阶段：Filter，Prepare，Recommend，Observe。阶段的输入是需要分析的 Kubernetes 资源，输出是推荐的优化建议。 下面开始介绍每个阶段的输入、输出和能力。&lt;/p>
+&lt;p>&lt;code>RecommendationContext&lt;/code> 保存了一次推荐过程中的上下文，包括推荐目标，RecommendationConfiguration 等，用户可以按需增加更多的内容。&lt;/p>
+&lt;h3 id="filter">Filter&lt;/h3>
+&lt;p>Filter 阶段用于预处理推荐数据。通常，在预处理时需判断推荐目标是否和 Recommender 匹配，比如，Resource Recommender 只支持处理 Workload（Deployment，StatefulSet）。除此之外，还可以判断推荐目标状态是否适合推荐，比如是否删除中，是否刚创建等。当返回 error 会终止此次推荐。BaseRecommender 实现了基本的预处理功能，用户可以调用它继承相关功能。&lt;/p>
+&lt;h3 id="prepare">Prepare&lt;/h3>
+&lt;p>Prepare 阶段用于数据准备，请求外部监控系统并将时序数据保存在上下文中。PrePrepare 扩展点用于检测监控系统的链接情况。Prepare 扩展点用于查询时序数据。PostPrepare 扩展点用于对时序数据的数据处理，比如：应用冷启动的异常数据，部分数据的缺失，数据聚合，异常数据清理等。&lt;/p>
+&lt;h3 id="recommend">Recommend&lt;/h3>
+&lt;p>Recommend 阶段用于基于时序数据和资源配置进行优化建议。优化建议的类型取决于推荐的类型。比如，如果是资源推荐，那么输出就是 kubernetes workload 的资源配置。Recommend 扩展点用于采用 Crane 的算法模块对数据进行分析计算，PostRecommend 阶段对分析结果进行最后处理。用户可以自定义 Recommend 阶段实现自定义的推荐结果。&lt;/p>
+&lt;h3 id="observe">Observe&lt;/h3>
+&lt;p>Observe 阶段用于推荐结果的可观测。比如，在资源推荐时，将优化建议的信息通过 Metric 保存到监控系统，再通过 Dashboard 观测优化建议带来的收益。&lt;/p></description></item></channel></rss>
