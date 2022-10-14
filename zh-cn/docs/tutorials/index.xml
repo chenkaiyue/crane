@@ -655,8 +655,8 @@ targetReplicas: 80
 &lt;p>通过 EHPA，用户可以同时配置 &lt;code>CronMetric&lt;/code>、&lt;code>PredictionMetric&lt;/code>、&lt;code>OriginalMetric&lt;/code>。&lt;/p>
 &lt;p>&lt;strong>我们强烈建议你配置所有维度的指标。它们分别代表 cron 副本、先前预测的副本、后观察的副本。&lt;/strong>&lt;/p>
 &lt;p>这是一个强大的功能。因为 HPA 总是选择由所有维度&lt;code>metrics&lt;/code>计算的最大副本进行扩展。&lt;/p>
-&lt;p>这将保证你工作负载的 QoS，当你同时配置三种类型的自动缩放时，根据实际观察到的指标计算的副本最大，然后它将使用最大的一个。&lt;/p>
-&lt;p>尽管由于某些意想不到的原因，导致由&lt;code>PredictionMetric&lt;/code>计算的副本更小。因此，你不必担心 QoS。&lt;/p>
+&lt;p>这将保证你工作负载的 QOS，当你同时配置三种类型的自动缩放时，根据实际观察到的指标计算的副本最大，然后它将使用最大的一个。&lt;/p>
+&lt;p>尽管由于某些意想不到的原因，导致由&lt;code>PredictionMetric&lt;/code>计算的副本更小。因此，你不必担心 QOS。&lt;/p>
 &lt;h4 id="mechanism">Mechanism&lt;/h4>
 &lt;p>当&lt;code>metrics adapter&lt;/code>处理&lt;code>external cron metrics&lt;/code>请求时，&lt;code>metrics adapter&lt;/code>将执行以下步骤。&lt;/p>
 &lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph LR

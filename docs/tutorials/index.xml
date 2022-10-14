@@ -1119,7 +1119,7 @@ targetReplicas: 80
 &lt;p>EffectiveHorizontalPodAutoscaler is compatible with HorizontalPodAutoscaler(Which is kubernetes built in). So if you configured metrics for HPA such as cpu or memory, then the HPA will scale by the real time metric it observed.&lt;/p>
 &lt;p>With EHPA, users can configure CronMetric、PredictionMetric、OriginalMetric at the same time.&lt;/p>
 &lt;p>&lt;strong>We highly recomend you configure metrics of all dimensions. They are represtenting the cron replicas, prior predicted replicas, posterior observed replicas.&lt;/strong>&lt;/p>
-&lt;p>This is a powerful feature. Because HPA always pick the largest replicas calculated by all dimensional metrics to scale. Which will gurantee your workload&amp;rsquo;s QoS, when you configure three types of autoscaling at the same time, the replicas caculated by real metric observed is largest, then it will use the max one. Although the replicas caculated by prediction metric is smaller for some unexpected reason. So you don&amp;rsquo;t be worried about the QoS.&lt;/p>
+&lt;p>This is a powerful feature. Because HPA always pick the largest replicas calculated by all dimensional metrics to scale. Which will gurantee your workload&amp;rsquo;s QOS, when you configure three types of autoscaling at the same time, the replicas caculated by real metric observed is largest, then it will use the max one. Although the replicas caculated by prediction metric is smaller for some unexpected reason. So you don&amp;rsquo;t be worried about the QOS.&lt;/p>
 &lt;h4 id="mechanism">Mechanism&lt;/h4>
 &lt;p>When metrics adapter deal with the external cron metric requests, metrics adapter will do following steps.&lt;/p>
 &lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph LR

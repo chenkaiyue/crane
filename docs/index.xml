@@ -441,7 +441,7 @@ scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="tru
 &lt;p>&lt;strong>Load-Aware Scheduling&lt;/strong>&lt;/p>
 &lt;p>Provide a simple but efficient scheduler that schedule pods based on actual node utilization data，and filters out those nodes with high load to balance the cluster. &lt;a href="/docs/tutorials/scheduling-pods-based-on-actual-node-load">learn more&lt;/a>.&lt;/p>
 &lt;p>&lt;strong>Colocation with Enhanced QOS&lt;/strong>&lt;/p>
-&lt;p>QOS-related capabilities ensure the running stability of Pods on Kubernetes. It has the ability of interference detection and active avoidance under the condition of multi-dimensional metrics, and supports reasonable operation and custom metrics access; it has the ability to oversell elastic resources enhanced by the prediction algorithm, reuse and limit the idle resources in the cluster; it has the enhanced bypass cpuset Management capabilities, improve resource utilization efficiency while binding cores. &lt;a href="/docs/tutorials/using-qos-ensurance.md">learn more&lt;/a>.&lt;/p>
+&lt;p>QOS-related capabilities ensure the running stability of Pods on Kubernetes. It has the ability of interference detection and active avoidance under the condition of multi-dimensional metrics, and supports reasonable operation and custom metrics access; it has the ability to oversell elastic resources enhanced by the prediction algorithm, reuse and limit the idle resources in the cluster; it has the enhanced bypass cpuset Management capabilities, improve resource utilization efficiency while binding cores. &lt;a href="/docs/tutorials/using-qos-ensurance">learn more&lt;/a>.&lt;/p>
 &lt;h2 id="architecture">Architecture&lt;/h2>
 &lt;p>The overall architecture of Crane is shown as below:&lt;/p>
 &lt;p>&lt;img src="/images/crane-arch.png" alt="Crane Arch&amp;quot;">&lt;/p>
@@ -561,7 +561,7 @@ users in form of policies, and the detection process is executed in a policy dec
 general-purpose policy engine.&lt;/p>
 &lt;h2 id="motivation">Motivation&lt;/h2>
 &lt;p>The criteria of abnormality or interference are not that always as simple as something like a metric value is higher than a threshold.
-Different users may have different QoS requirements on different applications in different environments. The rule of
+Different users may have different QOS requirements on different applications in different environments. The rule of
 abnormality detection varies, and it is impossible to implement all of them in code in advance.&lt;/p>
 &lt;h3 id="goals">Goals&lt;/h3>
 &lt;ol>
@@ -578,10 +578,10 @@ out of scope.&lt;/li>
 &lt;h3 id="user-stories">User Stories&lt;/h3>
 &lt;h4 id="story-1">Story 1&lt;/h4>
 &lt;p>A user has a critical online application which is latency sensitive running in the cluster, and he wants to use both
-the 99th percentile response time and the error code rate as the application QoS indicators. If either of these 2 indicators
+the 99th percentile response time and the error code rate as the application QOS indicators. If either of these 2 indicators
 deteriorates, the application is thought of being in abnormal status.&lt;/p>
 &lt;h4 id="story-2">Story 2&lt;/h4>
-&lt;p>The SRE team finds that if the node CPU utilization is more than 60%, the QoS of some latency sensitive applications
+&lt;p>The SRE team finds that if the node CPU utilization is more than 60%, the QOS of some latency sensitive applications
 running on it are likely to decline. So they want to keep the node CPU utilization lower than 60%.
 If the utilization is higher than this threshold, the BE applications should be suppressed
 accordingly.&lt;/p>
@@ -776,7 +776,7 @@ environments:&lt;/p>
 &lt;h3 id="020released">0.2.0：[released]&lt;/h3>
 &lt;ul>
 &lt;li>Multiple Metric Adaptor support&lt;/li>
-&lt;li>Node QoS Ensurance for CPU&lt;/li>
+&lt;li>Node QOS Ensurance for CPU&lt;/li>
 &lt;li>Operation Metrics about R3 and EPA applied ratio&lt;/li>
 &lt;/ul>
 &lt;h3 id="030-released">0.3.0 [released]&lt;/h3>
@@ -784,7 +784,7 @@ environments:&lt;/p>
 &lt;li>UI with cost visibility and usage optimizations.&lt;/li>
 &lt;li>Request Recommendation adapts with Virtual Kubelet&lt;/li>
 &lt;li>Multiple Triggers for EPA&lt;/li>
-&lt;li>Node QoS Ensurance for Mem&lt;/li>
+&lt;li>Node QOS Ensurance for Mem&lt;/li>
 &lt;li>Prediction with CPU, Memory, and Business Metrics&lt;/li>
 &lt;li>Scalability to support 1K TSP and 1K EPA&lt;/li>
 &lt;/ul>
@@ -800,7 +800,7 @@ environments:&lt;/p>
 &lt;h3 id="060-released">0.6.0 [released]&lt;/h3>
 &lt;ul>
 &lt;li>Scalability to support 3k TSP and 3k EPA&lt;/li>
-&lt;li>Algorithm and QoS Documentation&lt;/li>
+&lt;li>Algorithm and QOS Documentation&lt;/li>
 &lt;li>EHPA grafana dashboard&lt;/li>
 &lt;li>DSP Algorithm Optimization&lt;/li>
 &lt;li>Support remote adapter for external metric&lt;/li>
@@ -1359,7 +1359,7 @@ But the recommendations have some limitations now:&lt;/p>
 &lt;ul>
 &lt;li>
 &lt;p>The proposal implements some general sorting methods (which will be improved later):&lt;/p>
-&lt;p>classAndPriority： Compare the Qos class and class value of two pods. Compare Qos class first and then class value; Those with high priority are ranked later and have higher priority&lt;/p>
+&lt;p>classAndPriority： Compare the QOS class and class value of two pods. Compare QOS class first and then class value; Those with high priority are ranked later and have higher priority&lt;/p>
 &lt;p>runningTime：Compare the running time of two pods. The one with a long running time is ranked later and has a higher priority&lt;/p>
 &lt;p>If you only need to use these two sorting strategies, you can use the default sorting method: you will first compare the priority of the pod, then compare the usage of the corresponding indicators of the pod, and then compare the running time of the pod. There is a dimension that can compare the results, that is, the sorting results of the pod&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">GeneralSorter&lt;/span>(&lt;span style="color:#a6e22e">pods&lt;/span> []&lt;span style="color:#a6e22e">podinfo&lt;/span>.&lt;span style="color:#a6e22e">PodContext&lt;/span>) {
@@ -1425,7 +1425,7 @@ For example, the CPU usage can be suppressed by limiting the CGroup usage, and t
 &lt;p>Build multiple waterlines according to multiple nodeqosensurancepolicies and objectiveinsurances:&lt;/p>
 &lt;ol>
 &lt;li>
-&lt;p>Classified according to the actions corresponding to objectiveinsurances, the crane agent currently has three operations to guarantee node QoS, namely, evict, thtottledown (to suppress pod usage when the current usage is higher than the value in objectiveinsurances) and throttleup (to relax and recover pod usage when the current usage is lower than the value in objectiveinsurances). Therefore, there will be three waterline sets, namely, throttledownwaterline, Throttleupwaterline and evictwaterline&lt;/p>
+&lt;p>Classified according to the actions corresponding to objectiveinsurances, the crane agent currently has three operations to guarantee node QOS, namely, evict, thtottledown (to suppress pod usage when the current usage is higher than the value in objectiveinsurances) and throttleup (to relax and recover pod usage when the current usage is lower than the value in objectiveinsurances). Therefore, there will be three waterline sets, namely, throttledownwaterline, Throttleupwaterline and evictwaterline&lt;/p>
 &lt;/li>
 &lt;li>
 &lt;p>Then classify the waterlines in the same operation category according to their metric rules (metric A and metric Z are used as schematic in the figure), and record the value of each objectiveinsurances water level line, which is recorded as waterline;&lt;/p>
@@ -1554,8 +1554,8 @@ The following data structure is constructed by combining the difference between 
 &lt;/ul>
 &lt;h3 id="user-stories">User Stories&lt;/h3>
 &lt;ul>
-&lt;li>Users can use crane agent for better QoS guarantees. Support faster node load reduction to ensure that high priority services are not affected. At the same time, the throttle/eviction of low priority services is precisely controlled to avoid excessive operation.&lt;/li>
-&lt;li>With the help of the framework of precise operation (throttle/eviction), users can easily realize the QoS function with precise operation and sorting capability based on the user-defined metric without paying attention to details by implementing the attributes and methods related to the user-defined metric.&lt;/li>
+&lt;li>Users can use crane agent for better QOS guarantees. Support faster node load reduction to ensure that high priority services are not affected. At the same time, the throttle/eviction of low priority services is precisely controlled to avoid excessive operation.&lt;/li>
+&lt;li>With the help of the framework of precise operation (throttle/eviction), users can easily realize the QOS function with precise operation and sorting capability based on the user-defined metric without paying attention to details by implementing the attributes and methods related to the user-defined metric.&lt;/li>
 &lt;/ul></description></item><item><title>Docs: Replicas Recommendation</title><link>/docs/tutorials/replicas-recommendation/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/replicas-recommendation/</guid><description>
 &lt;p>Kubernetes&amp;rsquo; users often set the replicas of workload or HPA configurations based on empirical values. Replicas recommendation analyze the actual application usage and give advice for replicas and HPA configurations. You can refer to and adopt it for your workloads to improve cluster resource utilization.&lt;/p>
 &lt;h2 id="features">Features&lt;/h2>
@@ -2623,7 +2623,7 @@ targetReplicas: 80
 &lt;p>EffectiveHorizontalPodAutoscaler is compatible with HorizontalPodAutoscaler(Which is kubernetes built in). So if you configured metrics for HPA such as cpu or memory, then the HPA will scale by the real time metric it observed.&lt;/p>
 &lt;p>With EHPA, users can configure CronMetric、PredictionMetric、OriginalMetric at the same time.&lt;/p>
 &lt;p>&lt;strong>We highly recomend you configure metrics of all dimensions. They are represtenting the cron replicas, prior predicted replicas, posterior observed replicas.&lt;/strong>&lt;/p>
-&lt;p>This is a powerful feature. Because HPA always pick the largest replicas calculated by all dimensional metrics to scale. Which will gurantee your workload&amp;rsquo;s QoS, when you configure three types of autoscaling at the same time, the replicas caculated by real metric observed is largest, then it will use the max one. Although the replicas caculated by prediction metric is smaller for some unexpected reason. So you don&amp;rsquo;t be worried about the QoS.&lt;/p>
+&lt;p>This is a powerful feature. Because HPA always pick the largest replicas calculated by all dimensional metrics to scale. Which will gurantee your workload&amp;rsquo;s QOS, when you configure three types of autoscaling at the same time, the replicas caculated by real metric observed is largest, then it will use the max one. Although the replicas caculated by prediction metric is smaller for some unexpected reason. So you don&amp;rsquo;t be worried about the QOS.&lt;/p>
 &lt;h4 id="mechanism">Mechanism&lt;/h4>
 &lt;p>When metrics adapter deal with the external cron metric requests, metrics adapter will do following steps.&lt;/p>
 &lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph LR
@@ -2720,16 +2720,16 @@ F[Result workload replicas];
 &lt;ul>
 &lt;li>Just waiting. the Prediction algorithm need more time, you can see &lt;code>DSP&lt;/code> section to know more about this algorithm.&lt;/li>
 &lt;li>EffectiveHorizontalPodAutoscaler have a protection mechanism when prediction failed, it will use the actual cpu utilization to do autoscaling.&lt;/li>
-&lt;/ul></description></item><item><title>Docs: QoS Ensurance</title><link>/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance/</guid><description>
-&lt;h1 id="qos-ensurance">Qos Ensurance&lt;/h1>
-&lt;p>QoS ensurance guarantees the stability of the pods running on Kubernetes.&lt;/p>
+&lt;/ul></description></item><item><title>Docs: QOS Ensurance</title><link>/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance/</guid><description>
+&lt;h1 id="qos-ensurance">QOS Ensurance&lt;/h1>
+&lt;p>QOS ensurance guarantees the stability of the pods running on Kubernetes.&lt;/p>
 &lt;p>It has the ability of interference detection and active avoidance. When pod with higher priority is affected by resource competition, disable schedule, throttle and evict will be applied to pod with lower priority to ensure the overall stability of the node. Currently, the absolute value/percentage of the node&amp;rsquo;s cpu/mem is supported as a watermark. For details, please refer to qos-interference-detection-and-active-avoidance.md.
 When there is interference for eviction or throttle, accurate calculation will be performed, and the operation will be stopped when the load is lowered to slightly below the watermark to prevent accidental injury and transitional operation. For details, please refer to qos-accurately-perform-avoidance-actions.md.&lt;/p>
 &lt;p>At the same time, Crane supports custom metrics to adapt to the entire interference detection framework. Users only need to complete some operations such as sorting definition, and can reuse the interference detection and avoidance processes including precise operations.For details, please refer to qos-customized-metrics-interference-detection-avoidance-and-sorting.md.&lt;/p>
 &lt;p>Crane has the dynamic resource oversold ability enhanced by the prediction algorithm, and reuses the idle resources. At the same time, it combines the prediction ability of the crane to better reuse the idle resources. Currently, idle resource recycling of cpu and mem is supported. At the same time, it has the elastic resource limitation function to limit the workload of reusing idle resources, and avoid impact on high-quality business and starvation issues. For details, please refer to qos-dynamic-resource-oversold-and-limit.md.&lt;/p>
-&lt;p>At the same time, it has enhanced bypass cpuset management capability to improve resource utilization efficiency while binding cores. For details, please refer to qos-enhanced-bypass-cpuset-management.md.&lt;/p></description></item><item><title>Docs: QoS: Interference Detection and Active Avoidance</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance/</guid><description>
-&lt;h2 id="qos-ensurance-architecture">Qos Ensurance Architecture&lt;/h2>
-&lt;p>Qos ensurance&amp;rsquo;s architecture is shown as below. It contains three modules.&lt;/p>
+&lt;p>At the same time, it has enhanced bypass cpuset management capability to improve resource utilization efficiency while binding cores. For details, please refer to qos-enhanced-bypass-cpuset-management.md.&lt;/p></description></item><item><title>Docs: QOS: Interference Detection and Active Avoidance</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance/</guid><description>
+&lt;h2 id="qos-ensurance-architecture">QOS Ensurance Architecture&lt;/h2>
+&lt;p>QOS ensurance&amp;rsquo;s architecture is shown as below. It contains three modules.&lt;/p>
 &lt;ol>
 &lt;li>state collector: collect metrics periodically&lt;/li>
 &lt;li>anomaly analyzer: analyze the node triggered anomaly used collected metrics&lt;/li>
@@ -2755,7 +2755,7 @@ At the same time, the above content is associated to the specified nodes through
 The selector supported by PodQOS includes label selector, and also supports filtering of specific QOSClass (&amp;ldquo;BestEffort&amp;rdquo;, &amp;ldquo;Guaranteed&amp;rdquo;, etc.),
 specific Priority, and specific Namespace of pods, above selectors are associated with each other in the manner of &amp;ldquo;AND&amp;rdquo;.&lt;/p>
 &lt;h3 id="disable-scheduling">Disable Scheduling&lt;/h3>
-&lt;p>The following AvoidanceAction and NodeQOSEnsurancePolicy can be defined. As a result, when the node CPU usage triggers the threshold, disable schedule action for the node will be executed.&lt;/p>
+&lt;p>The following AvoidanceAction and NodeQOS can be defined. As a result, when the node CPU usage triggers the threshold, disable schedule action for the node will be executed.&lt;/p>
 &lt;p>The sample YAML looks like below:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">ensurance.crane.io/v1alpha1&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">AvoidanceAction&lt;/span>
@@ -2809,7 +2809,7 @@ specific Priority, and specific Namespace of pods, above selectors are associate
 &lt;p>Please check the video to learn more about the scheduling disable actions.&lt;/p>
 &lt;script id="asciicast-480735" src="https://asciinema.org/a/480735.js" async>&lt;/script>
 &lt;h3 id="throttle">Throttle&lt;/h3>
-&lt;p>The following AvoidanceAction and NodeQOSEnsurancePolicy can be defined. As a result, when the node CPU usage triggers the threshold, throttle action for the node will be executed.&lt;/p>
+&lt;p>The following AvoidanceAction and NodeQOS can be defined. As a result, when the node CPU usage triggers the threshold, throttle action for the node will be executed.&lt;/p>
 &lt;p>The sample YAML looks like below:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">ensurance.crane.io/v1alpha1&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">AvoidanceAction&lt;/span>
@@ -2940,7 +2940,7 @@ specific Priority, and specific Namespace of pods, above selectors are associate
 &lt;p>In order to avoid the impact of active avoidance operations on high-priority services, such as the wrongful eviction of important services,
 it is recommended to use PodQOS to associate workloads that use dynamic resources, so that only those workloads that use idle resources are affected when executing actions,
 ensuring that The stability of the core business on the node.&lt;/p>
-&lt;p>For the content of dymamic resources, see qos-dynamic-resource-oversold-and-limit.md.&lt;/p></description></item><item><title>Docs: QoS: Dynamic resource oversold and limit</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit/</guid><description>
+&lt;p>For the content of dymamic resources, see qos-dynamic-resource-oversold-and-limit.md.&lt;/p></description></item><item><title>Docs: QOS: Dynamic resource oversold and limit</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit/</guid><description>
 &lt;h2 id="dynamic-resource-oversold-enhanced-by-prediction-algorithm">Dynamic resource oversold enhanced by prediction algorithm&lt;/h2>
 &lt;p>In order to improve the stability, users usually set the request value higher than the actual usage when deploying applications, resulting in a waste of resources. In order to improve the resource utilization of nodes, users will deploy some besteffort applications in combination, using idle resources to realize oversold;
 However, due to the lack of resource limit and request constraints and related information in these applications, scheduler may still schedule these pods to nodes with high load, which is inconsistent with our original intention, so it is best to schedule based on the free resources of nodes.&lt;/p>
@@ -3002,7 +3002,7 @@ When deploying pod, limit and request use &lt;code>gocrane.io/&amp;lt;$resourcen
 &lt;h2 id="suitable-scene">suitable scene&lt;/h2>
 &lt;p>In order to increase the load of nodes, some offline jobs or less important jobs can be scheduled and deployed to the cluster by using dynamic resources. Such jobs will use idle elastic resources.
 With the watermark guarantee of QOS, when the node has a high load, it will be evicted and throttled first, and the utilization of the node will be improved on the premise of ensuring the stability of high-priority services.
-See the section &amp;ldquo;Used with dynamic resources&amp;rdquo; in qos-interference-detection-and-active-avoidance.md.&lt;/p></description></item><item><title>Docs: QoS: Accurately Perform Avoidance Actions</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions/</guid><description>
+See the section &amp;ldquo;Used with dynamic resources&amp;rdquo; in qos-interference-detection-and-active-avoidance.md.&lt;/p></description></item><item><title>Docs: QOS: Accurately Perform Avoidance Actions</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions/</guid><description>
 &lt;h2 id="accurately-perform-avoidance-actions">Accurately Perform Avoidance Actions&lt;/h2>
 &lt;p>Through the following two points, the excessive operation of low-quality pod can be avoided, and the gap between the metrics and the specified watermark can be reduced faster, so as to ensure that the high-priority service is not affected&lt;/p>
 &lt;ol>
@@ -3049,10 +3049,10 @@ See the section &amp;ldquo;Used with dynamic resources&amp;rdquo; in qos-interfe
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>About extending user-defined metrics and sorting, it is introduced in &amp;ldquo;User-defined metrics interference detection avoidance and user-defined sorting&amp;rdquo;.&lt;/p></description></item><item><title>Docs: QoS: Define your watermark</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting/</guid><description>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>About extending user-defined metrics and sorting, it is introduced in &amp;ldquo;User-defined metrics interference detection avoidance and user-defined sorting&amp;rdquo;.&lt;/p></description></item><item><title>Docs: QOS: Define your watermark</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting/</guid><description>
 &lt;h2 id="user-defined-metrics-interference-detection-avoidance-and-user-defined-sorting">User-defined metrics interference detection avoidance and user-defined sorting&lt;/h2>
 &lt;p>The use of user-defined metrics interference detection avoidance and user-defined sorting is the same as the process described in the &amp;ldquo;Accurately Perform Avoidance Actions&amp;rdquo;. Here is how to customize your own metrics to participate in the interference detection avoidance process&lt;/p>
-&lt;p>In order to better sort and accurately control metrics configured based on NodeQoSEnsurancePolicy, the concept of attributes is introduced into metrics.&lt;/p>
+&lt;p>In order to better sort and accurately control metrics configured based on NodeQOS, the concept of attributes is introduced into metrics.&lt;/p>
 &lt;p>The attributes of metric include the following, and these fields can be realized by customized indicators:&lt;/p>
 &lt;ol>
 &lt;li>Name Indicates the name of metric, which should be consistent with the metric name collected in the collector module&lt;/li>
@@ -3089,7 +3089,7 @@ For example, the CPU usage can be suppressed by limiting the CGroup usage, and t
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">orderedBy(classAndPriority, &amp;lt;metric-sort-func&amp;gt;, runningTime).Sort(pods)&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Among them, the following sorting method &lt;code>&amp;lt;metric-sort-func&amp;gt;&lt;/code> needs to be implemented
-&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs: QoS: Enhanced bypass cpuset management capability</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management/</guid><description>
+&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs: QOS: Enhanced bypass cpuset management capability</title><link>/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management/</guid><description>
 &lt;h2 id="enhanced-bypass-cpuset-management-capability">Enhanced bypass cpuset management capability&lt;/h2>
 &lt;p>Kubelet supports the static CPU manager strategy. When the guaranteed pod runs on the node, kebelet will allocate the specified dedicated CPU for the pod, which cannot be occupied by other processes. This ensures the CPU monopoly of the guaranteed pod, but also causes the low utilization of CPU and nodes, resulting in a certain waste.
 Crane agent provides a new strategy for cpuset management, allowing pod and other pod to share CPU. When it specifies CPU binding core, it can make use of the advantages of less context switching and higher cache affinity of binding core, and also allow other workload to deploy and share, so as to improve resource utilization.&lt;/p>
