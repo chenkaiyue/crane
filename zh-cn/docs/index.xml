@@ -2518,7 +2518,7 @@ F[Result workload replicas];
 &lt;ul>
 &lt;li>等一段时间再看。预测算法 &lt;code>DSP&lt;/code> 需要一定时间的数据才能进行预测。希望了解算法细节的可以查看算法的文档。&lt;/li>
 &lt;li>EffectiveHorizontalPodAutoscaler 提供一种保护机制，当预测失效时依然能通过实际的 CPU 使用率工作。&lt;/li>
-&lt;/ul></description></item><item><title>Docs: QoS Ensurance</title><link>/zh-cn/docs/tutorials/qos/using-qos-ensurance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/using-qos-ensurance.zh/</guid><description>
+&lt;/ul></description></item><item><title>Docs: QoS Ensurance</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance.zh/</guid><description>
 &lt;h1 id="qos-ensurance">QOS Ensurance&lt;/h1>
 &lt;p>Qos 相关能力保证了运行在 Kubernetes 上的 Pod 的稳定性。&lt;/p>
 &lt;p>具有干扰检测和主动回避能力，当较高优先级的 Pod 受到资源竞争的影响时，Disable Schedule、Throttle以及Evict 将应用于低优先级的 Pod，以保证节点整体的稳定，
@@ -2526,7 +2526,7 @@ F[Result workload replicas];
 在发生干扰进行驱逐或压制时，会进行精确计算，将负载降低到略低于水位线即停止操作，防止误伤和过渡操作，具体内容可以参照qos-accurately-perform-avoidance-actions.zh.md。&lt;/p>
 &lt;p>同时，crane支持自定义指标适配整个干扰检测框架，只需要完成排序定义等一些操作，即可复用包含精确操作在内的干扰检测和回避流程，具体内容可以参照qos-customized-metrics-interference-detection-avoidance-and-sorting.zh.md。&lt;/p>
 &lt;p>具有预测算法增强的弹性资源超卖能力，将集群内的空闲资源复用起来，同时结合crane的预测能力，更好地复用闲置资源，当前已经支持cpu和mem的空闲资源回收。同时具有弹性资源限制功能，限制使用弹性资源的workload最大和最小资源使用量，避免对高优业务的影响和饥饿问题。具体内容可以参照qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p>
-&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照qos-enhanced-bypass-cpuset-management.zh.md。&lt;/p></description></item><item><title>Docs: QoS：干扰检测和主动回避</title><link>/zh-cn/docs/tutorials/qos/qos-interference-detection-and-active-avoidance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/qos-interference-detection-and-active-avoidance.zh/</guid><description>
+&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照qos-enhanced-bypass-cpuset-management.zh.md。&lt;/p></description></item><item><title>Docs: QoS：干扰检测和主动回避</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance.zh/</guid><description>
 &lt;h2 id="qos-ensurance-架构">Qos Ensurance 架构&lt;/h2>
 &lt;p>Qos ensurance 的架构如下图所示。它包含三个模块。&lt;/p>
 &lt;ol>
@@ -2745,7 +2745,7 @@ F[Result workload replicas];
 &lt;h3 id="与弹性资源搭配使用">与弹性资源搭配使用&lt;/h3>
 &lt;p>为了避免主动回避操作对于高优先级业务的影响，比如误驱逐了重要业务，建议使用PodQOS关联使用了弹性资源的workload，这样在执行动作的时候只会影响这些使用了空闲资源的workload，
 保证了节点上的核心业务的稳定。&lt;/p>
-&lt;p>弹性资源的内容可以参见qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p></description></item><item><title>Docs: QoS: 弹性资源超卖和限制</title><link>/zh-cn/docs/tutorials/qos/qos-dynamic-resource-oversold-and-limit.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/qos-dynamic-resource-oversold-and-limit.zh/</guid><description>
+&lt;p>弹性资源的内容可以参见qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p></description></item><item><title>Docs: QoS: 弹性资源超卖和限制</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit.zh/</guid><description>
 &lt;h2 id="预测算法增强的动态资源超卖">预测算法增强的动态资源超卖&lt;/h2>
 &lt;p>为了提高稳定性，通常用户在部署应用的时候会设置高于实际使用量的Request值，造成资源的浪费，为了提高节点的资源利用率，用户会搭配部署一些BestEffort的应用，利用闲置资源，实现超卖；
 但是这些应用由于缺乏资源limit和request的约束和相关信息，调度器依旧可能将这些pod调度到负载较高的节点上去，这与我们的初衷是不符的，所以最好能依据节点的空闲资源量进行调度。&lt;/p>
@@ -2809,7 +2809,7 @@ F[Result workload replicas];
 &lt;h2 id="适配场景">适配场景&lt;/h2>
 &lt;p>为了提升节点的负载，可以将一些离线作业或者重要性较低的作业通过使用弹性资源的方式调度部署到集群中，这类作业会使用空闲的弹性资源，
 搭配QOS的水位线保障，在节点出现负载较高的时候，也会优先被驱逐和压制，在保证高优先级业务稳定的前提下提升节点利用率。
-可以参见qos-interference-detection-and-active-avoidance.zh.md中&amp;quot;与弹性资源搭配使用&amp;quot;部分的内容。&lt;/p></description></item><item><title>Docs: QoS: 精确执行回避动作</title><link>/zh-cn/docs/tutorials/qos/qos-accurately-perform-avoidance-actions.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/qos-accurately-perform-avoidance-actions.zh/</guid><description>
+可以参见qos-interference-detection-and-active-avoidance.zh.md中&amp;quot;与弹性资源搭配使用&amp;quot;部分的内容。&lt;/p></description></item><item><title>Docs: QoS: 精确执行回避动作</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions.zh/</guid><description>
 &lt;h2 id="精确执行回避动作">精确执行回避动作&lt;/h2>
 &lt;p>通过如下两点进行，避免了对于低优pod的过度操作的同时能够更快地降低指标到指定水位线的差距，保障高优业务不受影响&lt;/p>
 &lt;ol>
@@ -2857,7 +2857,7 @@ F[Result workload replicas];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
 &lt;/ol>
-&lt;p>关于扩展自定义指标和排序参考 &amp;ldquo;自定义指标干扰检测回避和自定义排序&amp;rdquo; 部分&lt;/p></description></item><item><title>Docs: QoS: 定义自己的水位线指标</title><link>/zh-cn/docs/tutorials/qos/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</guid><description>
+&lt;p>关于扩展自定义指标和排序参考 &amp;ldquo;自定义指标干扰检测回避和自定义排序&amp;rdquo; 部分&lt;/p></description></item><item><title>Docs: QoS: 定义自己的水位线指标</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh/</guid><description>
 &lt;h2 id="自定义指标干扰检测回避和自定义排序">自定义指标干扰检测回避和自定义排序&lt;/h2>
 &lt;p>自定义指标干扰检测回避和自定义排序的使用同 精确执行回避动作 部分中介绍的流程，此处介绍如何自定义自己的指标参与干扰检测回避流程&lt;/p>
 &lt;p>为了更好的基于NodeQOSEnsurancePolicy配置的metric进行排序和精准控制，对metric引入属性的概念。&lt;/p>
@@ -2897,7 +2897,7 @@ F[Result workload replicas];
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">orderedBy(classAndPriority, &amp;lt;metric-sort-func&amp;gt;, runningTime).Sort(pods)&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中&lt;code>&amp;lt;metric-sort-func&amp;gt;&lt;/code>需要实现如下的排序方法
-&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs: QoS: 增强的旁路cpuset管理能力</title><link>/zh-cn/docs/tutorials/qos/qos-enhanced-bypass-cpuset-management.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/qos/qos-enhanced-bypass-cpuset-management.zh/</guid><description>
+&lt;code>func (p1, p2 podinfo.PodContext) int32&lt;/code>&lt;/p></description></item><item><title>Docs: QoS: 增强的旁路cpuset管理能力</title><link>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management.zh/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management.zh/</guid><description>
 &lt;h2 id="增强的旁路cpuset管理能力">增强的旁路cpuset管理能力&lt;/h2>
 &lt;p>kubelet支持static的cpu manager策略，当guaranteed pod运行在节点上时，kebelet会为该pod分配指定的专属cpu，其他进程无法占用，这保证了guaranteed pod的cpu独占，但是也造成了cpu和节点的的利用率较低，造成了一定的浪费。
 crane agent为cpuset管理提供了新的策略，允许pod和其他pod共享cpu当其指定了cpu绑核时，可以在利用绑核更少的上下文切换和更高的缓存亲和性的优点的前提下，还能让其他workload部署共用，提升资源利用率。&lt;/p>
