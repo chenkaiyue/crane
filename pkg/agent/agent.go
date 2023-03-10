@@ -77,7 +77,7 @@ func NewAgent(ctx context.Context,
 	executeExcess string,
 	cpuManagerReconcilePeriod time.Duration,
 	defaultCPUPolicy string,
-) (*Agent, error) {
+	timeDivisionStart, timeDivisionEnd int) (*Agent, error) {
 	var managers []manager.Manager
 	var noticeCh = make(chan executor.AvoidanceExecutor)
 	agent := &Agent{
@@ -120,7 +120,7 @@ func NewAgent(ctx context.Context,
 
 	if nodeResource := utilfeature.DefaultFeatureGate.Enabled(features.CraneNodeResource); nodeResource {
 		tspName := agent.CreateNodeResourceTsp()
-		nodeResourceManager, err := resource.NewNodeResourceManager(kubeClient, nodeName, nodeResourceReserved, tspName, nodeInformer, tspInformer, stateCollector.NodeResourceChann)
+		nodeResourceManager, err := resource.NewNodeResourceManager(kubeClient, nodeName, nodeResourceReserved, tspName, nodeInformer, podInformer, tspInformer, stateCollector.NodeResourceChann, timeDivisionStart, timeDivisionEnd)
 		if err != nil {
 			return agent, err
 		}

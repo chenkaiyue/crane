@@ -38,6 +38,10 @@ type Options struct {
 	CPUManagerReconcilePeriod time.Duration
 	// DefaultCPUPolicy is the default cpu policy, default to exclusive.
 	DefaultCPUPolicy string
+	// TimeDivisionStart is the time node resource Manager starts to work
+	TimeDivisionStart int
+	// TimeDivisionEnd is the time node resource Manager stops working
+	TimeDivisionEnd int
 }
 
 // NewOptions builds an empty options.
@@ -71,4 +75,6 @@ func (o *Options) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&o.ExecuteExcess, "execute-excess", "10%", "The percentage of executions that exceed the gap between current usage and watermarks, default: 10%.")
 	flags.DurationVar(&o.CPUManagerReconcilePeriod, "cpu-manager-reconcile-period", 5*time.Second, "Specifies how often cpu manager reconciles.")
 	flags.StringVar(&o.DefaultCPUPolicy, "default-cpu-policy", topologyapi.AnnotationPodCPUPolicyExclusive, "The default cpu policy if pod does not specify, should be one of none, exclusive, numa or immovable, default to exclusive.")
+	flags.IntVar(&o.TimeDivisionStart, "time-div-start", 0, "Time node resource Manager starts to work")
+	flags.IntVar(&o.TimeDivisionEnd, "time-div-end", 0, "Time node resource Manager stops working")
 }

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -19,6 +21,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
+
+	"github.com/robfig/cron/v3"
 
 	predictionv1 "github.com/gocrane/api/pkg/generated/informers/externalversions/prediction/v1alpha1"
 	predictionlisters "github.com/gocrane/api/pkg/generated/listers/prediction/v1alpha1"
@@ -55,6 +59,9 @@ type NodeResourceManager struct {
 	nodeLister corelisters.NodeLister
 	nodeSynced cache.InformerSynced
 
+	podLister corelisters.PodLister
+	podSynced cache.InformerSynced
+
 	tspLister predictionlisters.TimeSeriesPredictionLister
 	tspSynced cache.InformerSynced
 
@@ -69,10 +76,15 @@ type NodeResourceManager struct {
 	reserveResource ReserveResource
 
 	tspName string
+
+	timeDivision bool
+
+	timeDivisionStart int
+	timeDivisionEnd   int
 }
 
 func NewNodeResourceManager(client clientset.Interface, nodeName string, nodeResourceReserved map[string]string, tspName string, nodeInformer coreinformers.NodeInformer,
-	tspInformer predictionv1.TimeSeriesPredictionInformer, stateChann chan map[string][]common.TimeSeries) (*NodeResourceManager, error) {
+	podInformer coreinformers.PodInformer, tspInformer predictionv1.TimeSeriesPredictionInformer, stateChann chan map[string][]common.TimeSeries, timeDivisionStart, timeDivisionEnd int) (*NodeResourceManager, error) {
 	reserveCpuPercent, err := utils.ParsePercentage(nodeResourceReserved[v1.ResourceCPU.String()])
 	if err != nil {
 		return nil, err
@@ -92,6 +104,8 @@ func NewNodeResourceManager(client clientset.Interface, nodeName string, nodeRes
 		client:     client,
 		nodeLister: nodeInformer.Lister(),
 		nodeSynced: nodeInformer.Informer().HasSynced,
+		podLister:  podInformer.Lister(),
+		podSynced:  podInformer.Informer().HasSynced,
 		tspLister:  tspInformer.Lister(),
 		tspSynced:  tspInformer.Informer().HasSynced,
 		recorder:   recorder,
@@ -100,7 +114,9 @@ func NewNodeResourceManager(client clientset.Interface, nodeName string, nodeRes
 			CpuPercent: &reserveCpuPercent,
 			MemPercent: &reserveMemoryPercent,
 		},
-		tspName: tspName,
+		tspName:           tspName,
+		timeDivisionStart: timeDivisionStart,
+		timeDivisionEnd:   timeDivisionEnd,
 	}
 	return o, nil
 }
@@ -117,6 +133,7 @@ func (o *NodeResourceManager) Run(stop <-chan struct{}) {
 		stop,
 		o.tspSynced,
 		o.nodeSynced,
+		o.podSynced,
 	) {
 		return
 	}
@@ -127,6 +144,9 @@ func (o *NodeResourceManager) Run(stop <-chan struct{}) {
 		for {
 			select {
 			case state := <-o.stateChann:
+				if !o.timeDivision {
+					continue
+				}
 				o.state = state
 				o.lastStateTime = time.Now()
 				start := time.Now()
@@ -139,6 +159,22 @@ func (o *NodeResourceManager) Run(stop <-chan struct{}) {
 			}
 		}
 	}()
+
+	start := cron.New()
+	start_time := "00 " + "00 " + strconv.Itoa(o.timeDivisionStart) + " * * ?"
+	start.AddFunc(start_time, func() {
+		o.timeDivision = true
+	})
+
+	end := cron.New()
+	end_time := "00 " + "00 " + strconv.Itoa(o.timeDivisionEnd) + " * * ?"
+	end.AddFunc(end_time, func() {
+		o.timeDivision = false
+		o.deleteAllExtPod()
+	})
+
+	start.Start()
+	end.Start()
 
 	return
 }
@@ -387,6 +423,22 @@ func (o *NodeResourceManager) GetCpuCoreCanNotBeReclaimedFromLocal() float64 {
 	return nodeCpuCannotBeReclaimedSeconds
 }
 
+func (o *NodeResourceManager) deleteAllExtPod() {
+	labelSelector := labels.NewSelector()
+	pods, err := o.podLister.List(labelSelector)
+	if err != nil {
+		klog.Errorf("Failed to list pods for deleting ext pods")
+		return
+	}
+	for _, pod := range pods {
+		if HasExtCpuRes(pod) {
+			if err = o.client.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{}); err != nil {
+				klog.Errorf("Failed to delete ext pods %s/%s", pod.Namespace, pod.Name)
+			}
+		}
+	}
+}
+
 func getReserveResourcePercentFromNodeAnnotations(annotations map[string]string, resourceName string) (float64, bool) {
 	if annotations == nil {
 		return 0, false
@@ -418,4 +470,23 @@ func generateUpdateEventMessage(resourcesFrom map[string]int64) string {
 		message = message + fmt.Sprintf("Updating elastic resource %s with %d.", k, v)
 	}
 	return message
+}
+
+// HasExtCpuRes whether pod has gocrane.io resources
+func HasExtCpuRes(pod *v1.Pod) bool {
+	for _, v := range pod.Spec.Containers {
+		for res, val := range v.Resources.Limits {
+			if (strings.HasPrefix(res.String(), fmt.Sprintf(utils.ExtResourcePrefixFormat, v1.ResourceCPU)) && val.Value() != 0) ||
+				(strings.HasPrefix(res.String(), fmt.Sprintf(utils.ExtResourcePrefixFormat, v1.ResourceMemory)) && val.Value() != 0) {
+				return true
+			}
+		}
+		for res, val := range v.Resources.Requests {
+			if strings.HasPrefix(res.String(), fmt.Sprintf(utils.ExtResourcePrefixFormat, v1.ResourceCPU)) && val.Value() != 0 ||
+				(strings.HasPrefix(res.String(), fmt.Sprintf(utils.ExtResourcePrefixFormat, v1.ResourceMemory)) && val.Value() != 0) {
+				return true
+			}
+		}
+	}
+	return false
 }
