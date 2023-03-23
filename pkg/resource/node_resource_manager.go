@@ -130,8 +130,9 @@ func NewNodeResourceManager(client clientset.Interface, nodeName string, nodeRes
 			CpuPercent: &reserveCpuPercent,
 			MemPercent: &reserveMemoryPercent,
 		},
-		tspName:         tspName,
-		timeDivisionCur: true,
+		tspName:             tspName,
+		timeDivisionCur:     true,
+		timeDivisionEnabled: true,
 	}
 	nodeInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
 		// Focused on pod belonged to this node
@@ -158,6 +159,11 @@ func (o *NodeResourceManager) reconcileCron(obj interface{}) {
 	timeDivisionEnabledAnno, timeDivisionEvictPod, timeDivisionStart, timeDivisionEnd := o.getNodeTimeDivisionAnnotations()
 
 	if timeDivisionEnabledAnno != o.timeDivisionEnabled || timeDivisionEvictPod != o.timeDivisionEvictPod || timeDivisionStart != o.timeDivisionStart || timeDivisionEnd != o.timeDivisionEnd {
+		o.timeDivisionEnabled = timeDivisionEnabledAnno
+		o.timeDivisionEvictPod = timeDivisionEvictPod
+		o.timeDivisionStart = timeDivisionStart
+		o.timeDivisionEnd = timeDivisionEnd
+
 		if o.startCronJob != nil {
 			o.startCronJob.Stop()
 		}
@@ -165,8 +171,13 @@ func (o *NodeResourceManager) reconcileCron(obj interface{}) {
 			o.endCronJob.Stop()
 		}
 
-		if timeDivisionEnabledAnno {
+		if o.timeDivisionEnabled {
 			o.StartCronCollect()
+		} else {
+			if o.timeDivisionEvictPod {
+				o.deleteAllExtPod()
+			}
+			o.clearNodeExtResources()
 		}
 	}
 }
@@ -247,33 +258,39 @@ func (o *NodeResourceManager) StartCronCollect() {
 	start_time, end_time := o.getExtTimeFromNodeAnnotations()
 	o.timeDivisionStart = start_time
 	o.timeDivisionEnd = end_time
-	//start_time := "00 " + "00 " + strconv.Itoa(o.timeDivisionStart) + " * * ?"
+
+	local, err := time.LoadLocation("Local")
+	if err != nil {
+		klog.Errorf("Get local time err: %#v", err)
+	}
+
 	if start_time != "" {
-		start := cron.New()
-		start.AddFunc(start_time, func() {
+		start := cron.New(cron.WithLocation(local))
+		_, err = start.AddFunc(start_time, func() {
 			o.timeDivisionCur = true
 		})
+		if err != nil {
+			klog.Errorf("Cron start add func err: %#v", err)
+		}
 		o.startCronJob = start
-
-		start.Start()
+		o.startCronJob.Start()
 	}
 
 	if end_time != "" {
-		end := cron.New()
-		//end_time := "00 " + "00 " + strconv.Itoa(o.timeDivisionEnd) + " * * ?"
-		end.AddFunc(end_time, func() {
+		end := cron.New(cron.WithLocation(local))
+		_, err = end.AddFunc(end_time, func() {
 			o.timeDivisionCur = false
 
-			evict := o.getExtEvcitEnabledFromNodeAnnotations()
-			o.timeDivisionEvictPod = evict
-
-			if evict {
+			if o.timeDivisionEvictPod {
 				o.deleteAllExtPod()
 			}
 			o.clearNodeExtResources()
 		})
+		if err != nil {
+			klog.Errorf("Cron end add func err: %#v", err)
+		}
 		o.endCronJob = end
-		end.Start()
+		o.endCronJob.Start()
 	}
 }
 
