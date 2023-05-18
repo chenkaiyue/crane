@@ -174,10 +174,16 @@ func (o *NodeResourceManager) reconcileCron(obj interface{}) {
 		if o.timeDivisionEnabled {
 			o.StartCronCollect()
 		} else {
-			if o.timeDivisionEvictPod {
-				o.deleteAllExtPod()
-			}
 			o.clearNodeExtResources()
+			if o.timeDivisionEvictPod {
+				go func() {
+					t := time.After(5 * time.Minute)
+					select {
+					case <-t:
+						o.deleteAllExtPod()
+					}
+				}()
+			}
 		}
 	}
 }
@@ -281,10 +287,17 @@ func (o *NodeResourceManager) StartCronCollect() {
 		_, err = end.AddFunc(end_time, func() {
 			o.timeDivisionCur = false
 
-			if o.timeDivisionEvictPod {
-				o.deleteAllExtPod()
-			}
 			o.clearNodeExtResources()
+
+			if o.timeDivisionEvictPod {
+				go func() {
+					t := time.After(5 * time.Minute)
+					select {
+					case <-t:
+						o.deleteAllExtPod()
+					}
+				}()
+			}
 		})
 		if err != nil {
 			klog.Errorf("Cron end add func err: %#v", err)
