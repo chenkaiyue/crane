@@ -557,9 +557,9 @@ scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="tru
 &lt;p>&lt;strong>负载感知的调度器&lt;/strong>&lt;/p>
 &lt;p>动态调度器根据实际的节点利用率构建了一个简单但高效的模型，并过滤掉那些负载高的节点来平衡集群。&lt;a href="/zh-cn/docs/tutorials/scheduling-pods-based-on-actual-node-load">了解更多&lt;/a>。&lt;/p>
 &lt;p>&lt;strong>拓扑感知的调度器&lt;/strong>&lt;/p>
-&lt;p>Crane Scheduler与Crane Agent配合工作，支持更为精细化的资源拓扑感知调度和多种绑核策略，可解决复杂场景下“吵闹的邻居问题&amp;quot;，使得资源得到更合理高效的利用。&lt;a href="/zh-cn/docs/tutorials/node-resource-tpolology-scheduler-plugins.md">了解更多&lt;/a>。&lt;/p>
+&lt;p>Crane Scheduler与Crane Agent配合工作，支持更为精细化的资源拓扑感知调度和多种绑核策略，可解决复杂场景下“吵闹的邻居问题&amp;quot;，使得资源得到更合理高效的利用。&lt;a href="/zh-cn/docs/tutorials/node-resource-tpolology-scheduler-plugins">了解更多&lt;/a>。&lt;/p>
 &lt;p>&lt;strong>基于 QOS 的混部&lt;/strong>&lt;/p>
-&lt;p>QOS相关能力保证了运行在 Kubernetes 上的 Pod 的稳定性。具有多维指标条件下的干扰检测和主动回避能力，支持精确操作和自定义指标接入；具有预测算法增强的弹性资源超卖能力，复用和限制集群内的空闲资源；具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率。&lt;a href="/zh-cn/docs/tutorials/using-qos-ensurance">了解更多&lt;/a>。&lt;/p></description></item><item><title>Docs: 快速开始</title><link>/zh-cn/docs/getting-started/installation/quick-start/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/getting-started/installation/quick-start/</guid><description>
+&lt;p>QOS相关能力保证了运行在 Kubernetes 上的 Pod 的稳定性。具有多维指标条件下的干扰检测和主动回避能力，支持精确操作和自定义指标接入；具有预测算法增强的弹性资源超卖能力，复用和限制集群内的空闲资源；具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率。&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/using-qos-ensurance.zh">了解更多&lt;/a>。&lt;/p></description></item><item><title>Docs: 快速开始</title><link>/zh-cn/docs/getting-started/installation/quick-start/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/getting-started/installation/quick-start/</guid><description>
 &lt;p>欢迎来到 Crane！在本文档中我们将介绍如何在本地安装 Crane 以及访问 Crane Dashboard：&lt;/p>
 &lt;ul>
 &lt;li>使用 &lt;a href="https://kind.sigs.k8s.io/">Kind&lt;/a> 安装一个本地运行的 Kubernetes 集群&lt;/li>
@@ -567,7 +567,7 @@ scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="tru
 &lt;li>使用 &lt;a href="https://helm.sh/">Helm&lt;/a> 安装 Crane&lt;/li>
 &lt;li>通过 kubectl 的 port-forward 访问 Crane Dashboard&lt;/li>
 &lt;/ul>
-&lt;p>更多关于安装的介绍请参考 &lt;a href="/zh-cn/docs/installation/installation">安装文档&lt;/a> 。&lt;/p>
+&lt;p>更多关于安装的介绍请参考 &lt;a href="/zh-cn/docs/getting-started/installation/installation/">安装文档&lt;/a> 。&lt;/p>
 &lt;h2 id="部署环境要求">部署环境要求&lt;/h2>
 &lt;ul>
 &lt;li>kubectl&lt;/li>
@@ -629,7 +629,7 @@ Make sure that you provide as much information as possible on how to reproduce t
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">RecommendationRule&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">workloads-rule&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">runInterval&lt;/span>: &lt;span style="color:#ae81ff">24h &lt;/span> &lt;span style="color:#75715e"># 每24h运行一次&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resourceSelectors&lt;/span>: &lt;span style="color:#75715e"># 资源的信息&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Deployment&lt;/span>
@@ -2061,6 +2061,49 @@ But the recommendations have some limitations now:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>$ kubectl get pod -o custom-columns&lt;span style="color:#f92672">=&lt;/span>name:metadata.name,topology-result:metadata.annotations.&lt;span style="color:#e6db74">&amp;#34;topology\.crane\.io/topology-result&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>name topology-result
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>nginx-deployment-754d99dcdf-mtcdp &lt;span style="color:#f92672">[{&lt;/span>&lt;span style="color:#e6db74">&amp;#34;name&amp;#34;&lt;/span>:&lt;span style="color:#e6db74">&amp;#34;node0&amp;#34;&lt;/span>,&lt;span style="color:#e6db74">&amp;#34;type&amp;#34;&lt;/span>:&lt;span style="color:#e6db74">&amp;#34;Node&amp;#34;&lt;/span>,&lt;span style="color:#e6db74">&amp;#34;resources&amp;#34;&lt;/span>:&lt;span style="color:#f92672">{&lt;/span>&lt;span style="color:#e6db74">&amp;#34;capacity&amp;#34;&lt;/span>:&lt;span style="color:#f92672">{&lt;/span>&lt;span style="color:#e6db74">&amp;#34;cpu&amp;#34;&lt;/span>:&lt;span style="color:#e6db74">&amp;#34;2&amp;#34;&lt;/span>&lt;span style="color:#f92672">}}}]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="为系统组件预留cpu">为系统组件预留CPU&lt;/h3>
+&lt;p>在某些场景下，我们希望能对kubelet预留的cpu做一些保护，使用场景包括但不限于：&lt;/p>
+&lt;ul>
+&lt;li>在混布场景下，不希望离线任务绑定系统预留的CPU核心，防止对k8s系统组件产生影响&lt;/li>
+&lt;li>0号核心在linux有独特用途，比如处理网络包、内核调用、处理中断等，因此不希望任务绑定0号核心&lt;/li>
+&lt;/ul>
+&lt;p>在Crane中，我们可以通过以下方式为系统组件预留CPU：&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>kubelet&lt;/code>设置预留CPU：按照&lt;a href="https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#explicitly-reserved-cpu-list">官方指引&lt;/a>设置预留的CPU列表&lt;/li>
+&lt;li>查看&lt;code>NodeResourceTopology&lt;/code>对象，&lt;code>.spec.attributes&lt;/code>中的&lt;code>go.crane.io/reserved-system-cpus&lt;/code>存储了预留的CPU 列表&lt;/li>
+&lt;li>在Pod的annotations中添加&lt;code>topology.crane.io/exclude-reserved-cpus&lt;/code>，表征Pod不绑定预留的CPU核心&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">apps&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Deployment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">nginx-reserve-cpus&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">labels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">app&lt;/span>: &lt;span style="color:#ae81ff">nginx-reserve-cpus&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">replicas&lt;/span>: &lt;span style="color:#ae81ff">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">selector&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">matchLabels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">app&lt;/span>: &lt;span style="color:#ae81ff">nginx-reserve-cpus&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">labels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">app&lt;/span>: &lt;span style="color:#ae81ff">nginx-reserve-cpus&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">annotations&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">topology.crane.io/exclude-reserved-cpus&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;true&amp;#34;&lt;/span> &lt;span style="color:#75715e">##不绑定系统预留cpu核心&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">schedulerName&lt;/span>: &lt;span style="color:#ae81ff">crane-scheduler&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">nginx:latest&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="4">
+&lt;li>登录到节点上，查看Pod绑定的CPUSet, 发现Pod在被分配了共享池中除预留核心外的其他CPU核心。&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 未设置预留&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>$ /sys/fs/cgroup/cpuset/kubepods J# cat besteffort/pod760a7e79-4+0b-4a16-8393-0f0c253ce26c/3c6bd8251e88543235f01bacf72406c5b249edd26747cc12fd1e6fc5535edec/cpuset.cpus
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>0-15,20-47,52-63
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 预留0号核心&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>$ /sys/fs/cgroup/cpuset/kubepods &lt;span style="color:#f92672">]&lt;/span>&lt;span style="color:#75715e"># cat besteffort/pod6afa5fe5-ba43-490a-9fa0-034fc23f440b/b574be6egedc916517bc4feb66078d3148d29bf5db5eb2cd379873e1157c1d4/cpuset.cpus&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>1-15,20-47,52-63
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Docs: Pod Sorting And Precise Execution For Crane Agent</title><link>/zh-cn/docs/proposals/pod-sorting-and-precise-execution-for-crane-agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/proposals/pod-sorting-and-precise-execution-for-crane-agent/</guid><description>
 &lt;p>该proposal丰富了crane-agent的排序策略，完善了通用排序。并且实现了一套精准操作(压制/驱逐)的框架，在执行压制/驱逐等操作时，操作到用户指定的水位线即停止的精确操作逻辑，避免了对于低优pod的过度操作；&lt;/p>
 &lt;p>具体来说：&lt;/p>
@@ -3750,11 +3793,11 @@ F[Result workload replicas];
 &lt;h1 id="基于-qos-的混部">基于 QOS 的混部&lt;/h1>
 &lt;p>QOS 相关能力保证了运行在 Kubernetes 上的 Pod 的稳定性。&lt;/p>
 &lt;p>具有干扰检测和主动回避能力，当较高优先级的 Pod 受到资源竞争的影响时，Disable Schedule、Throttle以及Evict 将应用于低优先级的 Pod，以保证节点整体的稳定，
-目前已经支持节点的cpu/mem负载绝对值/百分比作为水位线，具体可以参考qos-interference-detection-and-active-avoidance.zh.md
-在发生干扰进行驱逐或压制时，会进行精确计算，将负载降低到略低于水位线即停止操作，防止误伤和过渡操作，具体内容可以参照qos-accurately-perform-avoidance-actions.zh.md。&lt;/p>
-&lt;p>同时，crane支持自定义指标适配整个干扰检测框架，只需要完成排序定义等一些操作，即可复用包含精确操作在内的干扰检测和回避流程，具体内容可以参照qos-customized-metrics-interference-detection-avoidance-and-sorting.zh.md。&lt;/p>
-&lt;p>具有预测算法增强的弹性资源超卖能力，将集群内的空闲资源复用起来，同时结合crane的预测能力，更好地复用闲置资源，当前已经支持cpu和mem的空闲资源回收。同时具有弹性资源限制功能，限制使用弹性资源的workload最大和最小资源使用量，避免对高优业务的影响和饥饿问题。具体内容可以参照qos-dynamic-resource-oversold-and-limit.zh.md。&lt;/p>
-&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照qos-enhanced-bypass-cpuset-management.zh.md。&lt;/p></description></item><item><title>Docs: 系统架构</title><link>/zh-cn/docs/core-concept/architecture/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/core-concept/architecture/</guid><description>
+目前已经支持节点的cpu/mem负载绝对值/百分比作为水位线，具体可以参考&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-interference-detection-and-active-avoidance.zh">干扰检测和主动回避&lt;/a>。
+在发生干扰进行驱逐或压制时，会进行精确计算，将负载降低到略低于水位线即停止操作，防止误伤和过渡操作，具体内容可以参照&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-accurately-perform-avoidance-actions.zh">精确执行回避动作&lt;/a>。&lt;/p>
+&lt;p>同时，crane支持自定义指标适配整个干扰检测框架，只需要完成排序定义等一些操作，即可复用包含精确操作在内的干扰检测和回避流程，具体内容可以参照&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-customized-metrics-interference-detection-avoidance-and-sorting.zh">定义自己的水位线指标&lt;/a>。&lt;/p>
+&lt;p>具有预测算法增强的弹性资源超卖能力，将集群内的空闲资源复用起来，同时结合crane的预测能力，更好地复用闲置资源，当前已经支持cpu和mem的空闲资源回收。同时具有弹性资源限制功能，限制使用弹性资源的workload最大和最小资源使用量，避免对高优业务的影响和饥饿问题。具体内容可以参照&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-dynamic-resource-oversold-and-limit.zh">弹性资源超卖和限制&lt;/a>。&lt;/p>
+&lt;p>同时具备增强的旁路cpuset管理能力，在绑核的同时提升资源利用效率，具体内容可以参照&lt;a href="/zh-cn/docs/tutorials/colocation-with-enhanced-qos/qos-enhanced-bypass-cpuset-management.zh">增强的旁路cpuset管理能力&lt;/a>。&lt;/p></description></item><item><title>Docs: 系统架构</title><link>/zh-cn/docs/core-concept/architecture/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/zh-cn/docs/core-concept/architecture/</guid><description>
 &lt;p>Crane 的整体架构如下：&lt;/p>
 &lt;p>&lt;img src="/images/crane-arch.png" alt="Crane Arch">&lt;/p>
 &lt;p>&lt;strong>Craned&lt;/strong>&lt;/p>
