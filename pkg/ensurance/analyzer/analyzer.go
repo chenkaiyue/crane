@@ -490,7 +490,7 @@ func (s *AnomalyAnalyzer) filterPodQOSMatches(pods []*v1.Pod, actionName string)
 	}
 	for _, qos := range podQOSList {
 		for _, pod := range pods {
-			if !match(pod, qos) {
+			if !Match(pod, qos) {
 				klog.V(4).Infof("Pod %s/%s does not match PodQOS %s", pod.Namespace, pod.Name, qos.Name)
 				continue
 

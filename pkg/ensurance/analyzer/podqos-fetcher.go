@@ -69,7 +69,7 @@ func labelMatch(labelSelector metav1.LabelSelector, matchLabels map[string]strin
 	return true
 }
 
-func match(pod *v1.Pod, podQOS *ensuranceapi.PodQOS) bool {
+func Match(pod *v1.Pod, podQOS *ensuranceapi.PodQOS) bool {
 
 	if podQOS.Spec.ScopeSelector == nil &&
 		podQOS.Spec.LabelSelector.MatchLabels == nil &&
